@@ -1,0 +1,20 @@
+{
+  "name": "現場でんき探偵 Pro",
+  "short_name": "でんき探偵",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5f2ea",
+  "theme_color": "#163f3a",
+  "lang": "ja",
+  "description": "電気工事の記録・確認・整理を支援するβ確認版",
+  "icons": [
+    {
+      "src": "./assets/characters/09_app_icon.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
