@@ -1,12 +1,59 @@
 const STORAGE_KEY = 'denki-coach-beta-state-v1';
 
+const calendarSampleWorks = [
+  sampleCalendarWork('work-july08-lighting', '2026/07/08', '10:00', '12:00', 'C店舗 内装工事', '1階客席', '照明取付', '新人Aさん', 'C店舗', 'fixtures'),
+  sampleCalendarWork('work-july11-insulation', '2026/07/11', '09:30', '11:30', 'Bマンション 改修工事', '3階', '絶縁測定', '確認者Bさん', 'Bマンション', 'inspection'),
+  sampleCalendarWork('work-july14-piping', '2026/07/14', '09:00', '12:00', 'A邸 新築工事', '2階', '配管工事', '担当者Aさん', 'A邸', 'wiring'),
+  sampleCalendarWork('work-july14-fixtures', '2026/07/14', '13:30', '16:30', 'Bマンション 改修工事', '3階', '器具取付', '新人Aさん', 'Bマンション', 'fixtures'),
+  sampleCalendarWork('work-july15-layout', '2026/07/15', '08:30', '11:00', 'C店舗 内装工事', '1階売場', '墨出し', '確認者Bさん', 'C店舗', 'wiring'),
+  sampleCalendarWork('work-july15-panel', '2026/07/15', '13:00', '16:00', 'A邸 新築工事', '1階', '分電盤結線', '主任Cさん', 'A邸', 'inspection'),
+  sampleCalendarWork('work-july18-power', '2026/07/18', '14:00', '16:00', 'A邸 新築工事', '全階', '通電確認', '主任Cさん', 'A邸', 'inspection'),
+  sampleCalendarWork('work-july22-inspection', '2026/07/22', '10:00', '12:30', 'C店舗 内装工事', '全体', '検査', '担当者Aさん', 'C店舗', 'inspection'),
+  sampleCalendarWork('work-july28-correction', '2026/07/28', '09:00', '12:00', 'Bマンション 改修工事', '共用部', '手直し', '担当者Aさん', 'Bマンション', 'correction'),
+  sampleCalendarWork('work-july31-cleanup', '2026/07/31', '15:00', '17:00', 'C店舗 内装工事', 'バックヤード', '清掃・片付け', '新人Aさん', 'C店舗', 'correction')
+];
+
+function sampleCalendarWork(id, date, startTime, endTime, projectTitle, floor, category, assignee, site, scheduleId) {
+  return {
+    id,
+    date,
+    startTime,
+    endTime,
+    projectTitle,
+    floor,
+    category,
+    assignee,
+    assistant: '新人Aさん',
+    reviewer: '確認者Bさん',
+    site,
+    scheduleId,
+    process: category,
+    work: `${category}の作業内容と確認事項を工程表に沿って整理する。`,
+    status: date < '2026/07/14' ? '完了' : date === '2026/07/14' && startTime === '09:00' ? '作業中' : '予定',
+    progress: date < '2026/07/14' ? 100 : date === '2026/07/14' && startTime === '09:00' ? 45 : 0,
+    nextAction: `${category}の次の確認項目を上司と共有する。`,
+    supervisorCheck: '施工判断が必要な箇所は作業前に上司へ確認する。',
+    author: '新人Aさん',
+    updatedAt: '2026/07/13 18:30',
+    updatedBy: assignee,
+    reviewStatus: date < '2026/07/14' ? '確認済み' : '未確認'
+  };
+}
+
 const defaultState = {
   premium: false,
-  activeTab: 'notes',
+  navigationVersion: 2,
+  activeTab: 'home',
   activeProjectId: 'project-training-house',
   activeScheduleId: 'wiring',
-  selectedWorkDate: '2026/07/04',
-  activeWorkId: 'work-a-wiring',
+  homeDate: '2026/07/14',
+  homeListDate: '2026/07/14',
+  calendarMonth: '2026/07',
+  calendarMode: 'all',
+  calendarPerson: '担当者Aさん',
+  calendarSearch: '',
+  selectedWorkDate: '2026/07/14',
+  activeWorkId: 'work-july14-piping',
   activeAssignee: '担当者Aさん',
   activeCaseId: 'case-a-renovation-wiring',
   caseFilters: {
@@ -402,7 +449,14 @@ const defaultState = {
       updatedAt: '2026/07/03 19:40',
       updatedBy: '主任Cさん',
       reviewStatus: '確認済み'
-    }
+    },
+    ...calendarSampleWorks
+  ],
+  notices: [
+    { id: 'notice-safety', date: '2026/07/14', title: '安全ミーティングのお知らせ', type: '安全', read: false },
+    { id: 'notice-schedule', date: '2026/07/14', title: '工程変更のお知らせ', type: '工程変更', read: false },
+    { id: 'notice-photo', date: '2026/07/13', title: '確認が必要な写真メモがあります', type: '写真メモ', read: false },
+    { id: 'notice-comment', date: '2026/07/12', title: '上司コメントがあります', type: 'コメント', read: true }
   ],
   pastCases: [
     {
@@ -592,6 +646,11 @@ let hasRendered = false;
 let pendingSaveMessage = '';
 
 const tabs = [
+  { id: 'home', label: 'ホーム', icon: 'home' },
+  { id: 'calendar', label: '工程表検索', icon: 'calendar' },
+  { id: 'record', label: '記録する', icon: 'plus' },
+  { id: 'notices', label: '連絡事項', icon: 'bell' },
+  { id: 'menu', label: 'メニュー', icon: 'menu' },
   { id: 'projects', label: '案件', icon: 'site' },
   { id: 'notes', label: '予習ノート', icon: 'memo' },
   { id: 'before', label: '仕事前', icon: 'prep' },
@@ -604,7 +663,7 @@ const tabs = [
   { id: 'beta', label: 'βテスト', icon: 'beta' }
 ];
 
-const primaryTabIds = ['notes', 'projects', 'cases', 'photos', 'people'];
+const primaryTabIds = ['home', 'calendar', 'record', 'notices', 'menu'];
 const quickTabIds = ['notes', 'before', 'schedule', 'assignments', 'cases', 'projects', 'photos', 'people', 'after', 'beta'];
 
 const projectTypeOptions = ['新築', 'リフォーム', 'エアコン', '配線', '器具取付', '検査', '是正'];
@@ -658,6 +717,10 @@ function mergeState(defaultValue, savedValue) {
 function normalizePersistedState(savedState) {
   const source = isPlainObject(savedState) ? { ...savedState } : {};
 
+  if (source.navigationVersion !== 2 && source.activeTab === 'notes') {
+    source.activeTab = 'home';
+  }
+
   if (!Array.isArray(source.projects) && isPlainObject(source.project)) {
     const project = {
       ...defaultState.project,
@@ -679,6 +742,25 @@ function normalizePersistedState(savedState) {
 
   const project = merged.projects.find(item => item.id === merged.activeProjectId) || merged.projects[0];
   merged.project = { ...defaultState.project, ...project };
+  merged.navigationVersion = 2;
+
+  const savedWorks = Array.isArray(merged.dailyWorks) ? merged.dailyWorks : [];
+  const workIds = new Set(savedWorks.map(work => work.id));
+  const missingSamples = defaultState.dailyWorks.filter(work => !workIds.has(work.id));
+  merged.dailyWorks = [...savedWorks, ...cloneState(missingSamples)].map((work, index) => ({
+    ...work,
+    id: work.id || `work-legacy-${index}`,
+    date: formatDate(work.date || merged.homeDate),
+    startTime: work.startTime || '09:00',
+    endTime: work.endTime || '17:00',
+    projectTitle: work.projectTitle || `${work.site || 'サンプル現場'} 工事`,
+    floor: work.floor || work.site || '現場',
+    category: work.category || work.process || 'その他'
+  }));
+
+  if (!merged.people.some(person => person.name === merged.calendarPerson)) {
+    merged.calendarPerson = merged.people[0]?.name || '';
+  }
 
   return merged;
 }
@@ -733,37 +815,35 @@ function render() {
 
   const app = document.querySelector('#app');
   app.innerHTML = `
-    <header class="topbar">
-      <div class="brand-lockup">
-        <span class="brand-symbol" aria-hidden="true"><img src="./assets/characters/09_app_icon.png" alt=""></span>
-        <div>
-          <p class="eyebrow">新人電気工事士向け</p>
-          <h1>現場でんき探偵 <span>Pro</span></h1>
-        </div>
-      </div>
-      <div class="top-actions">
-        <label class="premium-switch">
-          <span>${state.premium ? '有料版' : '無料版'}</span>
-          <input type="checkbox" ${state.premium ? 'checked' : ''} data-action="toggle-premium" aria-label="有料版表示を切り替え">
-        </label>
-        <div class="save-status save-status-${saveStatus.tone}" aria-live="polite">
-          <span>${saveStatus.label}</span>
-          <small>${saveStatus.detail}</small>
-        </div>
-        <button class="reset-sample-button" data-action="reset-sample" type="button" aria-label="サンプルデータに戻す" title="サンプルデータに戻す">${lineIcon('reset')}</button>
-      </div>
-    </header>
+    ${appHeader()}
 
-    <main>
-      ${quickNavigation()}
-      ${state.activeTab === 'notes' ? projectSummary() : ''}
-      ${safetyNotice()}
-      <section class="screen">
+    <main data-active-tab="${state.activeTab}">
+      ${['home', 'calendar', 'notices', 'record', 'menu'].includes(state.activeTab) ? '' : safetyNotice()}
+      <section class="screen screen-${state.activeTab}">
         ${screenCharacterVisual()}
         ${activeScreen()}
       </section>
       ${tabNavigation()}
     </main>
+  `;
+}
+
+function appHeader() {
+  if (state.activeTab === 'calendar') return '';
+  const unread = state.notices.filter(item => !item.read).length;
+
+  return `
+    <header class="topbar app-header">
+      <button class="header-icon-button" data-tab="menu" type="button" aria-label="メニューを開く">${lineIcon('menu')}</button>
+      <button class="header-brand" data-tab="home" type="button" aria-label="ホームへ戻る">
+        <span class="helmet-mark" aria-hidden="true"><i></i>${lineIcon('bolt')}</span>
+        <strong>現場でんき探偵</strong>
+      </button>
+      <button class="header-icon-button header-notice-button" data-tab="notices" type="button" aria-label="連絡事項 ${unread}件未読">
+        ${lineIcon('bell')}
+        ${unread ? '<span class="unread-dot" aria-hidden="true"></span>' : ''}
+      </button>
+    </header>
   `;
 }
 
@@ -780,6 +860,16 @@ function lineIcon(name) {
     photo: '<path d="M4 8h3l2-3h6l2 3h5v11H4z" /><circle cx="12" cy="13" r="3.5" />',
     user: '<circle cx="12" cy="8" r="3.5" /><path d="M5 20c.6-3.3 2.8-5 7-5s6.4 1.7 7 5" />',
     home: '<path d="m3 10 9-7 9 7" /><path d="M5 9v11h14V9" /><path d="M9 20v-6h6v6" />',
+    calendar: '<rect x="3" y="5" width="18" height="16" rx="2" /><path d="M16 3v4M8 3v4M3 10h18" />',
+    plus: '<path d="M12 5v14M5 12h14" />',
+    bell: '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" /><path d="M10 21h4" />',
+    menu: '<path d="M4 6h16M4 12h16M4 18h16" />',
+    filter: '<path d="M3 5h18l-7 8v6l-4 2v-8z" />',
+    search: '<circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 5 5" />',
+    clock: '<circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" />',
+    back: '<path d="m15 18-6-6 6-6" />',
+    chevron: '<path d="m9 18 6-6-6-6" />',
+    megaphone: '<path d="m3 11 14-6v14L3 13z" /><path d="M6 14v5h4l1-4" />',
     beta: '<rect x="4" y="3" width="16" height="18" rx="2" /><path d="M8 3h8v3H8z" /><path d="m8 12 2 2 4-4M8 18h7" />'
   };
 
@@ -828,13 +918,18 @@ function tabNavigation() {
   return `
     <nav class="tabs bottom-nav" aria-label="画面切り替え">
       ${primaryTabIds.map(tabId => tabs.find(tab => tab.id === tabId)).filter(Boolean).map(tab => `
-        <button class="tab ${state.activeTab === tab.id ? 'is-active' : ''}" data-tab="${tab.id}" type="button">
+        <button class="tab ${tab.id === 'record' ? 'tab-record' : ''} ${bottomTabIsActive(tab.id) ? 'is-active' : ''}" data-tab="${tab.id}" type="button">
           <span class="tab-icon tab-icon-${tab.icon}" aria-hidden="true">${lineIcon(tab.icon)}</span>
-          <span class="tab-label">${tab.id === 'notes' ? 'ホーム' : tab.label}</span>
+          <span class="tab-label">${tab.id === 'calendar' ? '工程表' : tab.label}</span>
         </button>
       `).join('')}
     </nav>
   `;
+}
+
+function bottomTabIsActive(tabId) {
+  if (tabId === 'menu') return state.activeTab === 'menu' || quickTabIds.includes(state.activeTab);
+  return state.activeTab === tabId;
 }
 
 function overallProgress() {
@@ -1075,6 +1170,343 @@ function similarPastCases() {
   const matched = pastCasesForSchedule(activeSchedule.id);
 
   return (matched.length ? matched : state.pastCases).slice(0, 2);
+}
+
+function appDate(value) {
+  const [year, month, day] = formatDate(value || state.homeDate).split('/').map(Number);
+  return new Date(year, month - 1, day, 12);
+}
+
+function dateKey(date) {
+  return `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
+}
+
+function shiftDate(value, amount) {
+  const date = appDate(value);
+  date.setDate(date.getDate() + amount);
+  return dateKey(date);
+}
+
+function monthStart(value = state.calendarMonth) {
+  const match = String(value || '').match(/^(\d{4})\/(\d{2})/);
+  if (match) return new Date(Number(match[1]), Number(match[2]) - 1, 1, 12);
+  const fallback = appDate(state.homeDate);
+  return new Date(fallback.getFullYear(), fallback.getMonth(), 1, 12);
+}
+
+function monthKey(date) {
+  return `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function longDateLabel(value) {
+  const date = appDate(value);
+  const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+  return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日（${weekdays[date.getDay()]}）`;
+}
+
+function workStartTime(work) {
+  return work.startTime || '09:00';
+}
+
+function workEndTime(work) {
+  return work.endTime || '17:00';
+}
+
+function workProjectTitle(work) {
+  return work.projectTitle || `${work.site || 'サンプル現場'} 工事`;
+}
+
+function workFloor(work) {
+  return work.floor || work.site || '現場';
+}
+
+function workCategory(work) {
+  return work.category || work.process || 'その他';
+}
+
+function calendarCategoryTone(category) {
+  if (/墨出し|絶縁|検査/.test(category)) return 'green';
+  if (/配管|分電盤|通電/.test(category)) return 'blue';
+  if (/器具|手直し/.test(category)) return 'purple';
+  if (/照明/.test(category)) return 'orange';
+  if (/清掃|片付け/.test(category)) return 'teal';
+  return 'gray';
+}
+
+function homeDashboardScreen() {
+  const today = state.homeDate;
+  const tomorrow = shiftDate(today, 1);
+  const listDate = state.homeListDate || today;
+  const works = worksForDate(listDate).sort((a, b) => workStartTime(a).localeCompare(workStartTime(b)));
+
+  return `
+    <div class="home-dashboard">
+      <section class="home-greeting" aria-label="今日の挨拶">
+        <div class="home-greeting-copy">
+          <h2>おはようございます！</h2>
+          <p>今日も安全第一で頑張りましょう！</p>
+        </div>
+        <div class="home-city-scene" aria-hidden="true">
+          <span class="scene-sun"></span>
+          <span class="scene-cloud scene-cloud-one"></span>
+          <span class="scene-cloud scene-cloud-two"></span>
+          <span class="scene-crane"></span>
+          <span class="scene-buildings"><i></i><i></i><i></i><i></i><i></i></span>
+        </div>
+      </section>
+
+      <section class="home-feature-grid" aria-label="ホームメニュー">
+        ${homeFeatureCard('green', '本日の工事', '今日の現場と作業内容を確認できます', `data-home-work-date="${today}"`)}
+        ${homeFeatureCard('blue', '明日の工事', '明日の予定と準備内容を確認できます', `data-home-work-date="${tomorrow}"`)}
+        ${homeFeatureCard('yellow', '連絡事項', 'お知らせや注意事項を確認できます', 'data-tab="notices"')}
+        ${homeFeatureCard('purple', '工程表検索', '工程表をカレンダーで確認・検索できます', 'data-tab="calendar"')}
+      </section>
+
+      <section class="home-secondary-grid" aria-label="記録メニュー">
+        ${homeSecondaryCard('projects', 'site', '案件', '担当現場の情報や図面を確認')}
+        ${homeSecondaryCard('photos', 'photo', '写真メモ', '現場写真やメモを記録・確認')}
+      </section>
+
+      ${homeWorkList(listDate, works, today, tomorrow)}
+    </div>
+  `;
+}
+
+function homeFeatureCard(tone, title, body, actionAttribute) {
+  return `
+    <button class="home-feature-card home-feature-${tone}" ${actionAttribute} type="button">
+      ${homeFeatureVisual(tone)}
+      <strong>${title}</strong>
+      <small>${body}</small>
+      <span class="home-feature-arrow" aria-hidden="true">${lineIcon('chevron')}</span>
+    </button>
+  `;
+}
+
+function homeFeatureVisual(tone) {
+  if (tone === 'green' || tone === 'blue') {
+    return `
+      <span class="home-feature-visual feature-calendar-visual" aria-hidden="true">
+        ${lineIcon('calendar')}
+        <i class="feature-${tone === 'green' ? 'sun' : 'moon'}"></i>
+      </span>
+    `;
+  }
+
+  if (tone === 'purple') {
+    return `<span class="home-feature-visual feature-search-visual" aria-hidden="true">${lineIcon('calendar')}<i>${lineIcon('search')}</i></span>`;
+  }
+
+  return `<span class="home-feature-visual feature-megaphone-visual" aria-hidden="true">${lineIcon('megaphone')}</span>`;
+}
+
+function homeSecondaryCard(tab, icon, title, body) {
+  return `
+    <button class="home-secondary-card home-secondary-${tab}" data-tab="${tab}" type="button">
+      <span aria-hidden="true">${lineIcon(icon)}</span>
+      <span><strong>${title}</strong><small>${body}</small></span>
+      <i aria-hidden="true">${lineIcon('chevron')}</i>
+    </button>
+  `;
+}
+
+function homeWorkList(date, works, today, tomorrow) {
+  const label = date === today ? '本日の予定' : date === tomorrow ? '明日の予定' : `${longDateLabel(date)}の予定`;
+  return `
+    <section class="home-work-section" aria-label="${label}">
+      <div class="home-section-heading">
+        <div><span class="section-accent"></span><h3>${label}</h3></div>
+        <span>${works.length}件の工事予定</span>
+      </div>
+      <div class="home-work-list">
+        ${works.length ? works.map(homeWorkRow).join('') : '<p class="home-empty-state">この日の工事予定はありません。</p>'}
+      </div>
+    </section>
+  `;
+}
+
+function homeWorkRow(work) {
+  return `
+    <button class="home-work-row" data-work-id="${work.id}" type="button">
+      <span class="home-work-time">${workStartTime(work)}〜${workEndTime(work)}</span>
+      <strong class="home-work-title">${escapeHTML(workProjectTitle(work))}</strong>
+      <span class="home-work-category">${escapeHTML(workCategory(work))}</span>
+      <span class="home-work-place">${escapeHTML(workFloor(work))}</span>
+      <span class="home-work-arrow" aria-hidden="true">${lineIcon('chevron')}</span>
+    </button>
+  `;
+}
+
+function filteredCalendarWorks() {
+  const keyword = String(state.calendarSearch || '').trim().toLowerCase();
+  return state.dailyWorks.filter(work => {
+    const personMatch = state.calendarMode !== 'person' || work.assignee === state.calendarPerson;
+    const text = [workProjectTitle(work), work.site, workCategory(work), workFloor(work), work.assignee].join(' ').toLowerCase();
+    return personMatch && (!keyword || text.includes(keyword));
+  });
+}
+
+function calendarSearchScreen() {
+  const month = monthStart();
+  const monthLabel = `${month.getFullYear()}年 ${month.getMonth() + 1}月`;
+  const works = filteredCalendarWorks();
+  const selected = state.selectedWorkDate || dateKey(month);
+
+  return `
+    <div class="calendar-search-screen">
+      <header class="calendar-screen-header">
+        <button class="icon-button" data-tab="home" type="button" aria-label="ホームへ戻る">${lineIcon('back')}</button>
+        <h2>工程表検索</h2>
+        <div class="calendar-header-tools">
+          <button data-action="show-calendar-filter" type="button" aria-label="絞り込み">${lineIcon('filter')}<span>絞り込み</span></button>
+          <button data-action="focus-calendar-search" type="button" aria-label="検索">${lineIcon('search')}<span>検索</span></button>
+          <span aria-label="カレンダー">${lineIcon('calendar')}</span>
+        </div>
+      </header>
+
+      <section class="calendar-filter-panel" aria-label="表示条件">
+        <div class="calendar-mode-switch">
+          <button class="${state.calendarMode === 'all' ? 'is-active' : ''}" data-calendar-mode="all" type="button"><i>${state.calendarMode === 'all' ? '✓' : ''}</i>全員の動き</button>
+          <button class="${state.calendarMode === 'person' ? 'is-active' : ''}" data-calendar-mode="person" type="button"><i>${state.calendarMode === 'person' ? '✓' : ''}</i>個人の動き</button>
+        </div>
+        <label class="calendar-person-filter ${state.calendarMode === 'person' ? 'is-visible' : ''}">
+          <span>担当者</span>
+          <select data-action="set-calendar-person">${peopleOptions(state.calendarPerson)}</select>
+        </label>
+        <label class="calendar-keyword-filter">
+          ${lineIcon('search')}
+          <input type="search" value="${escapeHTML(state.calendarSearch)}" data-calendar-search placeholder="案件名・工程名・場所で検索" aria-label="工程表を検索">
+          ${state.calendarSearch ? '<button data-action="clear-calendar-search" type="button">クリア</button>' : ''}
+        </label>
+      </section>
+
+      <section class="month-calendar-card" aria-label="${monthLabel}の工程表">
+        <div class="month-calendar-controls">
+          <button data-calendar-month="-1" type="button" aria-label="前月">${lineIcon('back')}</button>
+          <strong>${monthLabel}</strong>
+          <button data-calendar-month="1" type="button" aria-label="翌月">${lineIcon('chevron')}</button>
+          <button class="today-button" data-action="calendar-today" type="button">今日</button>
+        </div>
+        <div class="calendar-weekdays">${['日', '月', '火', '水', '木', '金', '土'].map(day => `<span>${day}</span>`).join('')}</div>
+        ${monthCalendarGrid(month, works, selected)}
+      </section>
+
+      ${selectedCalendarDay(selected, works)}
+    </div>
+  `;
+}
+
+function monthCalendarGrid(month, works, selectedDate) {
+  const first = new Date(month.getFullYear(), month.getMonth(), 1, 12);
+  const start = new Date(first);
+  start.setDate(1 - first.getDay());
+  const days = Array.from({ length: 42 }, (_, index) => {
+    const date = new Date(start);
+    date.setDate(start.getDate() + index);
+    return date;
+  });
+
+  return `
+    <div class="month-calendar-grid">
+      ${days.map(date => {
+        const key = dateKey(date);
+        const dayWorks = works.filter(work => work.date === key);
+        const visible = dayWorks.slice(0, 2);
+        return `
+          <button class="month-calendar-day ${date.getMonth() !== month.getMonth() ? 'is-outside' : ''} ${key === selectedDate ? 'is-selected' : ''}" data-calendar-day="${key}" type="button" aria-label="${longDateLabel(key)} ${dayWorks.length}件">
+            <span class="calendar-day-number">${date.getDate()}</span>
+            <span class="calendar-day-events">
+              ${visible.map(work => `<small class="calendar-event-label tone-${calendarCategoryTone(workCategory(work))}">${escapeHTML(workCategory(work))}</small>`).join('')}
+              ${dayWorks.length > 2 ? `<small class="calendar-more">ほか${dayWorks.length - 2}件</small>` : ''}
+            </span>
+          </button>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+function selectedCalendarDay(date, calendarWorks) {
+  const works = calendarWorks.filter(work => work.date === date).sort((a, b) => workStartTime(a).localeCompare(workStartTime(b)));
+  return `
+    <section class="selected-day-card" id="calendar-day-detail" aria-label="${longDateLabel(date)}の工事一覧">
+      <div class="selected-day-heading"><div>${lineIcon('calendar')}<h3>${longDateLabel(date)}</h3></div><span>${works.length}件の予定</span></div>
+      <div class="selected-day-list">${works.length ? works.map(calendarWorkRow).join('') : '<p class="calendar-empty">表示条件に合う工事予定はありません。</p>'}</div>
+    </section>
+  `;
+}
+
+function calendarWorkRow(work) {
+  const tone = calendarCategoryTone(workCategory(work));
+  return `
+    <button class="calendar-detail-row" data-work-id="${work.id}" type="button">
+      <span class="calendar-detail-time">${workStartTime(work)}〜${workEndTime(work)}</span>
+      <span class="calendar-detail-main"><strong>${escapeHTML(workCategory(work))}</strong><small>${escapeHTML(workProjectTitle(work))} / ${escapeHTML(work.site)}</small><small>担当：${escapeHTML(work.assignee)}</small></span>
+      <span class="calendar-detail-floor tone-${tone}">${escapeHTML(workFloor(work))}</span>
+      <span class="calendar-detail-arrow" aria-hidden="true">${lineIcon('chevron')}</span>
+    </button>
+  `;
+}
+
+function noticesScreen() {
+  const unread = state.notices.filter(item => !item.read).length;
+  return `
+    <div class="notices-screen">
+      <header class="utility-screen-header"><div><p class="eyebrow">Information</p><h2>連絡事項</h2></div><span>${unread}件 未読</span></header>
+      <div class="notice-list">
+        ${state.notices.map(item => `
+          <button class="notice-item ${item.read ? 'is-read' : 'is-unread'}" data-notice-id="${item.id}" type="button">
+            <span class="notice-type">${escapeHTML(item.type)}</span>
+            <span class="notice-copy"><time>${item.date}</time><strong>${escapeHTML(item.title)}</strong></span>
+            <span class="notice-state">${item.read ? '確認済み' : '未読'}</span>
+            <span class="notice-arrow">${lineIcon('chevron')}</span>
+          </button>
+        `).join('')}
+      </div>
+      <p class="screen-footnote">β版のサンプル連絡事項です。外部通信は行いません。</p>
+    </div>
+  `;
+}
+
+function recordMenuScreen() {
+  return `
+    <div class="record-menu-screen">
+      <header class="utility-screen-header"><div><p class="eyebrow">Quick record</p><h2>記録する</h2></div></header>
+      <div class="record-choice-grid">
+        ${recordChoice('photos', 'photo', '写真メモ', '現場写真と確認事項を記録')}
+        ${recordChoice('notes', 'memo', '予習ノート', '気づきと確認事項を整理')}
+        <button class="record-choice" data-action="open-project-create" type="button"><span>${lineIcon('site')}</span><strong>案件作成</strong><small>新しい現場案件を追加</small><i>${lineIcon('chevron')}</i></button>
+      </div>
+    </div>
+  `;
+}
+
+function recordChoice(tab, icon, title, body) {
+  return `<button class="record-choice" data-tab="${tab}" type="button"><span>${lineIcon(icon)}</span><strong>${title}</strong><small>${body}</small><i>${lineIcon('chevron')}</i></button>`;
+}
+
+function menuScreen() {
+  return `
+    <div class="menu-screen">
+      <header class="utility-screen-header"><div><p class="eyebrow">All features</p><h2>メニュー</h2></div><span>既存機能</span></header>
+      ${quickNavigation()}
+      <section class="public-beta-notice" aria-label="公開β版の注意事項">
+        <strong>操作検証用のサンプル版です</strong>
+        <p>実在する氏名・住所・現場写真・図面は入力しないでください。</p>
+        <ul>
+          <li>データはこの端末のブラウザ内に保存されます。</li>
+          <li>本番用ログイン・権限管理・クラウド保存は未実装です。</li>
+          <li>入力内容の外部送信は行いません。</li>
+        </ul>
+      </section>
+      <section class="menu-settings" aria-label="表示と保存の設定">
+        <div><strong>表示と保存</strong><small>この端末のブラウザ内に保存されます</small></div>
+        <label class="premium-switch"><span>${state.premium ? '有料版' : '無料版'}</span><input type="checkbox" ${state.premium ? 'checked' : ''} data-action="toggle-premium" aria-label="有料版表示を切り替え"></label>
+        <div class="save-status save-status-${saveStatus.tone}" aria-live="polite"><span>${saveStatus.label}</span><small>${saveStatus.detail}</small></div>
+        <button class="reset-sample-button" data-action="reset-sample" type="button">${lineIcon('reset')}<span>サンプルデータに戻す</span></button>
+      </section>
+    </div>
+  `;
 }
 
 function projectSummary() {
@@ -1502,6 +1934,12 @@ function reviewStatusClass(status) {
 }
 
 function activeScreen() {
+  if (state.activeTab === 'home') return homeDashboardScreen();
+  if (state.activeTab === 'calendar') return calendarSearchScreen();
+  if (state.activeTab === 'notices') return noticesScreen();
+  if (state.activeTab === 'record') return recordMenuScreen();
+  if (state.activeTab === 'menu') return menuScreen();
+
   if (state.activeTab === 'projects') {
     return projectsScreen();
   }
@@ -2685,7 +3123,7 @@ function betaTestScreen() {
       </div>
       <div class="progress-ring" aria-label="βテスト確認率 ${percent}%">${percent}%</div>
     </div>
-    <p class="lead">Sawakoちゃんや新人電気工事士さんが、1案件だけ実際に触って確認するためのチェック表です。入力内容はこのブラウザのlocalStorageに保存します。</p>
+    <p class="lead">βテスト担当者や新人電気工事士さんが、1案件だけ実際に触って確認するためのチェック表です。入力内容はこのブラウザのlocalStorageに保存します。</p>
     <aside class="notice">
       βテスト用チェック表は、本番ログイン、本番DB、クラウド保存、決済なしの画面モックです。実際の施工判断は、所属会社のルール、現場責任者、上司、有資格者の指示に従ってください。
     </aside>
@@ -2829,6 +3267,12 @@ function readProjectForm() {
 document.addEventListener('input', (event) => {
   const target = event.target;
 
+  if (target.matches('[data-calendar-search]')) {
+    state.calendarSearch = target.value;
+    persistState('検索条件を保存しました');
+    return;
+  }
+
   if (target.matches('[data-project-field]')) {
     setSaveStatus('未保存', 'unsaved', '案件フォームの変更は追加または更新で保存されます');
     return;
@@ -2847,6 +3291,18 @@ document.addEventListener('input', (event) => {
 
 document.addEventListener('change', async (event) => {
   const target = event.target;
+
+  if (target.matches('[data-calendar-search]')) {
+    state.calendarSearch = target.value;
+    render();
+    return;
+  }
+
+  if (target.matches('[data-action="set-calendar-person"]')) {
+    state.calendarPerson = target.value;
+    render();
+    return;
+  }
 
   if (target.matches('[data-case-filter]')) {
     readCaseFiltersFromDOM();
@@ -2978,6 +3434,105 @@ document.addEventListener('click', (event) => {
   const resetSampleTarget = event.target.closest('[data-action="reset-sample"]');
   if (resetSampleTarget) {
     resetToSampleState();
+    return;
+  }
+
+  const homeWorkDateTarget = event.target.closest('[data-home-work-date]');
+  if (homeWorkDateTarget) {
+    state.homeListDate = homeWorkDateTarget.dataset.homeWorkDate;
+    state.selectedWorkDate = state.homeListDate;
+    const firstWork = worksForDate(state.homeListDate)[0];
+    if (firstWork) {
+      state.activeWorkId = firstWork.id;
+      state.activeAssignee = firstWork.assignee;
+      state.activeScheduleId = firstWork.scheduleId;
+    }
+    render();
+    return;
+  }
+
+  const calendarModeTarget = event.target.closest('[data-calendar-mode]');
+  if (calendarModeTarget) {
+    state.calendarMode = calendarModeTarget.dataset.calendarMode;
+    render();
+    return;
+  }
+
+  const calendarMonthTarget = event.target.closest('[data-calendar-month]');
+  if (calendarMonthTarget) {
+    const month = monthStart();
+    month.setMonth(month.getMonth() + Number(calendarMonthTarget.dataset.calendarMonth));
+    state.calendarMonth = monthKey(month);
+    state.selectedWorkDate = dateKey(month);
+    const firstWork = filteredCalendarWorks().find(work => work.date.startsWith(state.calendarMonth));
+    if (firstWork) {
+      state.selectedWorkDate = firstWork.date;
+      state.activeWorkId = firstWork.id;
+    }
+    render();
+    return;
+  }
+
+  const calendarTodayTarget = event.target.closest('[data-action="calendar-today"]');
+  if (calendarTodayTarget) {
+    state.calendarMonth = state.homeDate.slice(0, 7);
+    state.selectedWorkDate = state.homeDate;
+    const firstWork = filteredCalendarWorks().find(work => work.date === state.selectedWorkDate);
+    if (firstWork) state.activeWorkId = firstWork.id;
+    render();
+    scrollToCalendarDayDetail();
+    return;
+  }
+
+  const calendarDayTarget = event.target.closest('[data-calendar-day]');
+  if (calendarDayTarget) {
+    state.selectedWorkDate = calendarDayTarget.dataset.calendarDay;
+    state.calendarMonth = state.selectedWorkDate.slice(0, 7);
+    const firstWork = filteredCalendarWorks().find(work => work.date === state.selectedWorkDate);
+    if (firstWork) {
+      state.activeWorkId = firstWork.id;
+      state.activeAssignee = firstWork.assignee;
+      state.activeScheduleId = firstWork.scheduleId;
+    }
+    render();
+    scrollToCalendarDayDetail();
+    return;
+  }
+
+  const showCalendarFilterTarget = event.target.closest('[data-action="show-calendar-filter"]');
+  if (showCalendarFilterTarget) {
+    state.calendarMode = 'person';
+    render();
+    requestAnimationFrame(() => document.querySelector('[data-action="set-calendar-person"]')?.focus());
+    return;
+  }
+
+  const focusCalendarSearchTarget = event.target.closest('[data-action="focus-calendar-search"]');
+  if (focusCalendarSearchTarget) {
+    document.querySelector('[data-calendar-search]')?.focus();
+    return;
+  }
+
+  const clearCalendarSearchTarget = event.target.closest('[data-action="clear-calendar-search"]');
+  if (clearCalendarSearchTarget) {
+    state.calendarSearch = '';
+    render();
+    return;
+  }
+
+  const noticeTarget = event.target.closest('[data-notice-id]');
+  if (noticeTarget) {
+    const notice = state.notices.find(item => item.id === noticeTarget.dataset.noticeId);
+    if (notice) notice.read = true;
+    render();
+    return;
+  }
+
+  const openProjectCreateTarget = event.target.closest('[data-action="open-project-create"]');
+  if (openProjectCreateTarget) {
+    state.activeTab = 'projects';
+    render();
+    requestAnimationFrame(() => document.querySelector('.project-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
     return;
   }
 
@@ -3230,6 +3785,14 @@ document.addEventListener('click', (event) => {
   if (!tab) return;
   state.activeTab = tab.dataset.tab;
   render();
+});
+
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Enter' && event.target.matches('[data-calendar-search]')) {
+    event.preventDefault();
+    state.calendarSearch = event.target.value;
+    render();
+  }
 });
 
 function scrollToScheduleDetail() {
