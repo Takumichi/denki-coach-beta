@@ -40,8 +40,117 @@ function sampleCalendarWork(id, date, startTime, endTime, projectTitle, floor, c
   };
 }
 
+const toolCategories = ['手工具', '電動工具', '測定器', '安全用品', '消耗品', '配線材料', '取付材料', 'その他'];
+const toolProcesses = ['図面確認', '墨出し', '配管', '配線', '器具取付', '分電盤', '検査', '是正・手直し'];
+
+const defaultToolCatalog = [
+  {
+    id: 'tool-pliers', name: 'ペンチ', reading: 'ぺんち', aliases: ['電工ペンチ'], category: '手工具', processes: ['配線', '器具取付'],
+    purpose: '電線の保持、曲げ、切断などに使う基本工具です。', beginnerNote: '握り方と刃の向きを確認してから、無理のない力で扱います。',
+    preCheck: '刃の欠け、グリップの緩み、絶縁部分の傷を確認。', safetyNote: '活線では使用せず、切断対象を周囲から離して扱う。', askSupervisor: '会社指定のサイズと絶縁工具の扱いを確認する。', companyApproved: true, searchKeyword: 'ペンチ 電工工具', favorite: false, packingChecked: false
+  },
+  {
+    id: 'tool-nippers', name: 'ニッパー', reading: 'にっぱー', aliases: ['電工ニッパー'], category: '手工具', processes: ['配線', '器具取付'],
+    purpose: '電線や結束バンドの余分な部分を切断します。', beginnerNote: '切断面が飛ばない向きにし、必要な長さを残して切ります。',
+    preCheck: '刃先の欠け、開閉の引っかかり、グリップの傷を確認。', safetyNote: '切断片の飛散に注意し、保護めがねのルールを守る。', askSupervisor: '切断してよい範囲と廃材の処理方法を確認する。', companyApproved: true, searchKeyword: 'ニッパー 電工', favorite: false, packingChecked: false
+  },
+  {
+    id: 'tool-vvf-stripper', name: 'VVFストリッパー', reading: 'ぶいぶいえふすとりっぱー', aliases: ['VVF剥離工具', 'ストリッパー'], category: '手工具', processes: ['配線', '分電盤'],
+    purpose: 'VVFケーブルの外装や絶縁被覆を所定の長さで剥きます。', beginnerNote: 'ケーブルの種類と剥離目盛を照合してから使用します。',
+    preCheck: '刃の状態、目盛、ケーブルサイズの対応を確認。', safetyNote: '芯線を傷つけないよう、指定位置で軽く切れ目を入れる。', askSupervisor: '使用するケーブルに合う剥離位置と仕上がりを確認する。', companyApproved: true, searchKeyword: 'VVFストリッパー', favorite: false, packingChecked: false
+  },
+  {
+    id: 'tool-electric-knife', name: '電工ナイフ', reading: 'でんこうないふ', aliases: ['ケーブルナイフ'], category: '手工具', processes: ['配線', '配管'],
+    purpose: 'ケーブル外装の切り開きや梱包材の処理に使います。', beginnerNote: '刃先を自分や周囲へ向けず、浅く切り進めます。',
+    preCheck: '刃の固定、折れや錆、収納状態を確認。', safetyNote: '使わないときは刃を収納し、腰袋の中で刃が露出しないようにする。', askSupervisor: '現場で使える刃物の種類と保管場所を確認する。', companyApproved: false, searchKeyword: '電工ナイフ ケーブル', favorite: false, packingChecked: false
+  },
+  {
+    id: 'tool-crimping', name: '圧着工具', reading: 'あっちゃくこうぐ', aliases: ['リングスリーブ圧着工具', '圧着ペンチ'], category: '手工具', processes: ['配線', '分電盤'],
+    purpose: '指定された接続材を圧着して電線を接続します。', beginnerNote: '電線本数とスリーブ記号を照合し、圧着後の刻印を確認します。',
+    preCheck: '適合するスリーブ、工具サイズ、ラチェット解除を確認。', safetyNote: '電源を切った状態で作業し、圧着後の引張確認を行う。', askSupervisor: '会社ルールの圧着記号と確認方法を教えてもらう。', companyApproved: true, searchKeyword: '圧着工具 リングスリーブ', favorite: false, packingChecked: false
+  },
+  {
+    id: 'tool-voltage-detector', name: '検電器', reading: 'けんでんき', aliases: ['検電ペン', '電圧検知器'], category: '測定器', processes: ['配線', '分電盤', '検査'],
+    purpose: '電圧の有無を確認するための測定器です。', beginnerNote: '測定前後に既知の電源で動作確認する手順を覚えます。',
+    preCheck: '電池、表示、先端、測定レンジを確認。', safetyNote: '検電だけで無電圧と断定せず、会社の停電確認手順を優先する。', askSupervisor: '検電器の使い方と無電圧確認の手順を確認する。', companyApproved: true, searchKeyword: '検電器 電圧検知', favorite: false, packingChecked: false
+  },
+  {
+    id: 'tool-tester', name: 'テスター', reading: 'てすたー', aliases: ['マルチメーター', '回路計'], category: '測定器', processes: ['配線', '分電盤', '検査'],
+    purpose: '電圧、導通などを確認するための測定器です。', beginnerNote: '測定対象とレンジを合わせ、リード線の接続を確認します。',
+    preCheck: '電池、リード線、レンジ切替、表示を確認。', safetyNote: '測定方法を自己判断せず、対象回路と測定条件を確認する。', askSupervisor: '測定レンジ、測定箇所、記録方法を確認する。', companyApproved: false, searchKeyword: 'テスター マルチメーター', favorite: false, packingChecked: false
+  },
+  {
+    id: 'tool-insulation-tester', name: '絶縁抵抗計', reading: 'ぜつえいたいこうけい', aliases: ['メガー', '絶縁計'], category: '測定器', processes: ['配線', '分電盤', '検査'],
+    purpose: '回路の絶縁状態を確認するための測定器です。', beginnerNote: '測定対象を切り離す必要がある場合があるため、手順を先に確認します。',
+    preCheck: '電池、測定コード、レンジ、校正表示を確認。', safetyNote: '測定電圧や放電手順を守り、接続された機器を傷めないようにする。', askSupervisor: 'メガーを使う回路、測定電圧、合否の記録方法を確認する。', companyApproved: true, searchKeyword: 'メガー 絶縁抵抗計', favorite: false, packingChecked: false
+  },
+  {
+    id: 'tool-tape-measure', name: 'メジャー', reading: 'めじゃー', aliases: ['スケール', 'コンベックス'], category: '測定器', processes: ['図面確認', '墨出し', '器具取付'],
+    purpose: '寸法や取付位置を測るために使います。', beginnerNote: '図面の基準点と現場の基準点をそろえて測ります。',
+    preCheck: '目盛、爪、ロック、テープの戻りを確認。', safetyNote: 'テープの跳ね戻りに注意し、通路をふさがない。', askSupervisor: '基準寸法と測定結果の記録方法を確認する。', companyApproved: false, searchKeyword: 'メジャー コンベックス 工事', favorite: false, packingChecked: false
+  },
+  {
+    id: 'tool-level', name: '水平器', reading: 'すいへいき', aliases: ['レベル'], category: '測定器', processes: ['墨出し', '器具取付', '配管'],
+    purpose: '取付物や配管の水平・垂直を確認します。', beginnerNote: '測定面の汚れを取り、目盛の読み方を確認します。',
+    preCheck: '気泡管、測定面、端部の欠けを確認。', safetyNote: '高所では落下防止と足場のルールを優先する。', askSupervisor: '許容差と確認する基準線を確認する。', companyApproved: false, searchKeyword: '水平器 レベル 工具', favorite: false, packingChecked: false
+  },
+  {
+    id: 'tool-tool-bag', name: '腰袋', reading: 'こしぶくろ', aliases: ['工具差し', 'ツールバッグ'], category: '安全用品', processes: ['図面確認', '配管', '配線', '器具取付'],
+    purpose: '必要な工具を身につけて持ち運ぶための入れ物です。', beginnerNote: '工具を詰め込みすぎず、刃物や重量物の位置を決めます。',
+    preCheck: 'ベルト、金具、縫い目、落下防止を確認。', safetyNote: '高所では工具の落下防止を行い、通路に置かない。', askSupervisor: '現場で許可されている携帯方法を確認する。', companyApproved: false, searchKeyword: '腰袋 工具差し', favorite: false, packingChecked: false
+  },
+  {
+    id: 'tool-helmet', name: 'ヘルメット', reading: 'へるめっと', aliases: ['保護帽', '安全帽'], category: '安全用品', processes: ['図面確認', '墨出し', '配管', '配線', '器具取付', '分電盤', '検査', '是正・手直し'],
+    purpose: '現場で頭部を保護するための保護具です。', beginnerNote: 'あごひもを締め、着用前に外観と使用期限を確認します。',
+    preCheck: '帽体、内装、あごひも、ラベルを確認。', safetyNote: '落下や強い衝撃を受けたものは使用を続けない。', askSupervisor: '現場指定の保護帽と着用ルールを確認する。', companyApproved: true, searchKeyword: 'ヘルメット 保護帽 工事', favorite: false, packingChecked: false
+  },
+  {
+    id: 'tool-gloves', name: '保護手袋', reading: 'ほごてぶくろ', aliases: ['作業手袋', '絶縁手袋'], category: '安全用品', processes: ['配管', '配線', '器具取付', '是正・手直し'],
+    purpose: '切創、汚れ、摩擦などから手を保護します。', beginnerNote: '作業内容に合う種類を選び、サイズを合わせます。',
+    preCheck: '破れ、汚れ、湿り、サイズを確認。', safetyNote: '電気用保護具の扱いは、会社の点検・交換ルールを守る。', askSupervisor: '作業ごとに指定される手袋の種類を確認する。', companyApproved: true, searchKeyword: '保護手袋 作業手袋', favorite: false, packingChecked: false
+  },
+  {
+    id: 'tool-cable-ties', name: '結束バンド', reading: 'けっそくばんど', aliases: ['ナイロンタイ', 'タイラップ'], category: '消耗品', processes: ['配線', '分電盤'],
+    purpose: '配線をまとめ、仮固定や整理に使います。', beginnerNote: '締めすぎず、配線の識別や点検性を残して整理します。',
+    preCheck: '長さ、幅、耐候性、必要数量を確認。', safetyNote: '余りを切るときは切断面を残さず、周囲を傷つけない。', askSupervisor: '使用箇所に合う材質と固定方法を確認する。', companyApproved: false, searchKeyword: '結束バンド ナイロンタイ', favorite: false, packingChecked: false
+  },
+  {
+    id: 'tool-insulation-tape', name: '絶縁テープ', reading: 'ぜつえんてーぷ', aliases: ['ビニルテープ', '電工テープ'], category: '消耗品', processes: ['配線', '分電盤', '是正・手直し'],
+    purpose: '配線の識別や端部の保護などに使うテープです。', beginnerNote: '用途に合う種類と色を選び、巻き終わりを整えます。',
+    preCheck: '粘着、劣化、幅、色、残量を確認。', safetyNote: '絶縁テープだけで安全が確保できると判断しない。', askSupervisor: '補修・識別に使える範囲と会社指定品を確認する。', companyApproved: true, searchKeyword: '絶縁テープ ビニルテープ', favorite: false, packingChecked: false
+  },
+  {
+    id: 'tool-screwdriver', name: 'ドライバーセット', reading: 'どらいばーせっと', aliases: ['プラスドライバー', 'マイナスドライバー'], category: '手工具', processes: ['器具取付', '分電盤', '是正・手直し'],
+    purpose: '端子台や器具のねじを回すために使います。', beginnerNote: 'ねじ頭に合う先端を選び、押す力を保って回します。',
+    preCheck: '先端の摩耗、絶縁グリップ、サイズを確認。', safetyNote: '電源を切る手順と、指定された絶縁工具の使用を優先する。', askSupervisor: '端子ごとの締付方法や指定ドライバーを確認する。', companyApproved: true, searchKeyword: 'ドライバーセット 電工', favorite: false, packingChecked: false
+  },
+  {
+    id: 'tool-monkey-wrench', name: 'モンキーレンチ', reading: 'もんきーれんち', aliases: ['アジャスタブルレンチ'], category: '手工具', processes: ['配管', '器具取付'],
+    purpose: 'ナットや継手を回すための調整式レンチです。', beginnerNote: '口幅を合わせ、ナットの面にしっかり掛けます。',
+    preCheck: '開閉、ウォームギア、口の摩耗を確認。', safetyNote: '延長して過大な力をかけず、滑りに注意する。', askSupervisor: '締付方向と締付確認の方法を確認する。', companyApproved: false, searchKeyword: 'モンキーレンチ 配管', favorite: false, packingChecked: false
+  },
+  {
+    id: 'tool-drill-driver', name: '充電ドライバー', reading: 'じゅうでんどらいばー', aliases: ['電動ドライバー', 'インパクト'], category: '電動工具', processes: ['墨出し', '器具取付', '配管'],
+    purpose: 'ねじ締めや下穴あけを効率よく行う電動工具です。', beginnerNote: '回転方向、トルク、ビットの固定を確認してから使います。',
+    preCheck: 'バッテリー、ビット、チャック、ブレーキを確認。', safetyNote: '保護具を着用し、回転部に手や衣服を近づけない。', askSupervisor: '使用許可、トルク設定、充電池の管理方法を確認する。', companyApproved: true, searchKeyword: '充電ドライバー 電工', favorite: false, packingChecked: false
+  },
+  {
+    id: 'tool-conduit-cutter', name: '配管カッター', reading: 'はいかんかったー', aliases: ['パイプカッター'], category: '電動工具', processes: ['配管'],
+    purpose: '指定された樹脂管などを切断するための工具です。', beginnerNote: '対象材と切断長さを確認し、まっすぐ切ります。',
+    preCheck: '刃、ローラー、固定部、対応サイズを確認。', safetyNote: '切断片やバリに注意し、必要に応じて手袋を着用する。', askSupervisor: '対象となる管種、切断方法、端部処理を確認する。', companyApproved: false, searchKeyword: '配管カッター パイプカッター', favorite: false, packingChecked: false
+  },
+  {
+    id: 'tool-marker', name: '墨出しマーカー', reading: 'すみだしまーかー', aliases: ['マーキングペン', '油性マーカー'], category: 'その他', processes: ['図面確認', '墨出し', '器具取付'],
+    purpose: '基準位置や確認箇所を現場に印します。', beginnerNote: '図面と現場の基準を確認してから、消去可否を判断します。',
+    preCheck: '色、太さ、残量、下地との相性を確認。', safetyNote: '消してよい場所かを確認し、仕上げ面を汚さない。', askSupervisor: '記入してよい範囲と使用する色を確認する。', companyApproved: false, searchKeyword: '墨出し マーカー', favorite: false, packingChecked: false
+  },
+];
+
 const defaultState = {
   premium: false,
+  activeToolId: 'tool-pliers',
+  toolFilters: { keyword: '', category: 'すべて', process: 'すべて', favoriteOnly: false },
+  tools: defaultToolCatalog,
   navigationVersion: 2,
   activeTab: 'home',
   activeProjectId: 'project-training-house',
@@ -63,12 +172,12 @@ const defaultState = {
     assignee: 'すべて',
     status: 'すべて'
   },
-  activePersonId: 'person-yamada',
+  activePersonId: 'person-assignee-a',
   people: [
-    { id: 'person-yamada', name: '担当者Aさん', role: '先輩', duty: '担当者' },
+    { id: 'person-assignee-a', name: '担当者Aさん', role: '先輩', duty: '担当者' },
     { id: 'person-rookie-a', name: '新人Aさん', role: '新人', duty: '補助・記入者' },
-    { id: 'person-tanaka', name: '確認者Bさん', role: '先輩', duty: '確認者' },
-    { id: 'person-sato', name: '主任Cさん', role: '上司', duty: '現場責任者' },
+    { id: 'person-reviewer-b', name: '確認者Bさん', role: '先輩', duty: '確認者' },
+    { id: 'person-chief-c', name: '主任Cさん', role: '上司', duty: '現場責任者' },
     { id: 'person-admin', name: '管理者', role: '管理者', duty: '案件管理' }
   ],
   project: {
@@ -77,9 +186,9 @@ const defaultState = {
     client: '社内研修案件',
     schedule: '2026/07/03 現場前予習',
     location: '木造2階建て / 新築',
-    address: 'サンプル県 デモ市 1-2-3',
+    address: 'サンプル県デモ市1-2-3',
     type: '新築',
-    contractor: 'サンプル電設 株式会社',
+    contractor: 'サンプル電設A社',
     startDate: '2026/07/03',
     endDate: '2026/07/24',
     status: '新人向け予習',
@@ -100,9 +209,9 @@ const defaultState = {
       client: '社内研修案件',
       schedule: '2026/07/03 現場前予習',
       location: '木造2階建て / 新築',
-      address: 'サンプル県 デモ市 1-2-3',
+      address: 'サンプル県デモ市1-2-3',
       type: '新築',
-      contractor: 'サンプル電設 株式会社',
+      contractor: 'サンプル電設A社',
       startDate: '2026/07/03',
       endDate: '2026/07/24',
       status: '新人向け予習',
@@ -122,9 +231,9 @@ const defaultState = {
       client: 'A邸 改修工事',
       schedule: '2026/07/03 - 2026/07/17',
       location: '木造2階建て / リフォーム',
-      address: 'サンプル県 デモ市 2-8-5',
+      address: 'テスト市モデル町4-5-6',
       type: 'リフォーム',
-      contractor: 'サンプル工務店',
+      contractor: 'サンプル電設A社',
       startDate: '2026/07/03',
       endDate: '2026/07/17',
       status: '作業中',
@@ -144,9 +253,9 @@ const defaultState = {
       client: 'Bマンション 改修',
       schedule: '2026/07/10 - 2026/07/24',
       location: '集合住宅 / 器具取付',
-      address: 'サンプル県 デモ市 3-4-12',
+      address: 'モデル県サンプル市7-8-9',
       type: '器具取付',
-      contractor: 'サンプル設備サービス',
+      contractor: 'デモ設備B社',
       startDate: '2026/07/10',
       endDate: '2026/07/24',
       status: '予定',
@@ -637,6 +746,7 @@ const defaultState = {
 };
 
 let state = loadPersistedState();
+let toolDetailExpanded = true;
 let saveStatus = {
   label: '保存済み',
   detail: 'ブラウザ内に保存済み',
@@ -658,13 +768,14 @@ const tabs = [
   { id: 'assignments', label: '担当別', icon: 'team' },
   { id: 'cases', label: '過去事例', icon: 'case' },
   { id: 'photos', label: '写真メモ', icon: 'photo' },
+  { id: 'tools', label: '工具・資材検索', icon: 'tool' },
   { id: 'people', label: '担当者', icon: 'user' },
   { id: 'after', label: '自宅整理', icon: 'home' },
   { id: 'beta', label: 'βテスト', icon: 'beta' }
 ];
 
 const primaryTabIds = ['home', 'calendar', 'record', 'notices', 'menu'];
-const quickTabIds = ['notes', 'before', 'schedule', 'assignments', 'cases', 'projects', 'photos', 'people', 'after', 'beta'];
+const quickTabIds = ['notes', 'before', 'schedule', 'assignments', 'cases', 'projects', 'photos', 'tools', 'people', 'after', 'beta'];
 
 const projectTypeOptions = ['新築', 'リフォーム', 'エアコン', '配線', '器具取付', '検査', '是正'];
 const caseTypeOptions = ['すべて', '新築', 'リフォーム', 'エアコン', '配線', '器具取付', '検査', '是正'];
@@ -735,6 +846,39 @@ function normalizePersistedState(savedState) {
   if (!Array.isArray(merged.projects) || !merged.projects.length) {
     merged.projects = cloneState(defaultState.projects);
   }
+
+  const savedTools = Array.isArray(merged.tools) ? merged.tools : [];
+  const toolIds = new Set(savedTools.map(tool => tool.id));
+  const missingTools = defaultToolCatalog.filter(tool => !toolIds.has(tool.id));
+  merged.tools = [...savedTools, ...cloneState(missingTools)].map((tool, index) => ({
+    ...tool,
+    id: tool.id || `tool-legacy-${index}`,
+    aliases: Array.isArray(tool.aliases) ? tool.aliases : [],
+    processes: Array.isArray(tool.processes) ? tool.processes : [],
+    favorite: Boolean(tool.favorite),
+    packingChecked: Boolean(tool.packingChecked)
+  }));
+
+  // Remove the superseded prototype-only sample when upgrading an earlier preview.
+  if (merged.tools.length > 20 && merged.tools.some(tool => tool.id === 'tool-safety-glasses')) {
+    merged.tools = merged.tools.filter(tool => tool.id !== 'tool-safety-glasses');
+  }
+
+  if (!merged.tools.length) {
+    merged.tools = cloneState(defaultToolCatalog);
+  }
+
+  if (!merged.activeToolId || !merged.tools.find(tool => tool.id === merged.activeToolId)) {
+    merged.activeToolId = merged.tools[0].id;
+  }
+
+  merged.toolFilters = {
+    keyword: '',
+    category: 'すべて',
+    process: 'すべて',
+    favoriteOnly: false,
+    ...(isPlainObject(merged.toolFilters) ? merged.toolFilters : {})
+  };
 
   if (!merged.activeProjectId || !merged.projects.find(project => project.id === merged.activeProjectId)) {
     merged.activeProjectId = merged.projects[0].id;
@@ -858,6 +1002,11 @@ function lineIcon(name) {
     team: '<circle cx="9" cy="8" r="3" /><circle cx="17" cy="9" r="2.5" /><path d="M3 20c.6-3.3 2.8-5 6-5s5.4 1.7 6 5M14 15c3.5-.3 6 1.4 6 4" />',
     case: '<circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 5 5" />',
     photo: '<path d="M4 8h3l2-3h6l2 3h5v11H4z" /><circle cx="12" cy="13" r="3.5" />',
+    tool: '<path d="m14.7 6.3 3-3a5 5 0 0 0 3.9 6.8l-8.6 8.6a2.3 2.3 0 0 1-3.2-3.2l8.6-8.6a5 5 0 0 0-3.7-.6Z" /><path d="m5 19-2 2M7 17l-2 2" />',
+    heart: '<path d="M20.8 8.8c0 5.5-8.8 10.2-8.8 10.2S3.2 14.3 3.2 8.8A4.7 4.7 0 0 1 12 6.5a4.7 4.7 0 0 1 8.8 2.3Z" />',
+    check: '<path d="m5 12 4 4L19 6" />',
+    external: '<path d="M14 5h5v5M19 5l-9 9" /><path d="M18 13v5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" />',
+    shield: '<path d="M12 3 5 6v5c0 4.8 2.9 8.1 7 10 4.1-1.9 7-5.2 7-10V6z" /><path d="m9 12 2 2 4-4" />',
     user: '<circle cx="12" cy="8" r="3.5" /><path d="M5 20c.6-3.3 2.8-5 7-5s6.4 1.7 7 5" />',
     home: '<path d="m3 10 9-7 9 7" /><path d="M5 9v11h14V9" /><path d="M9 20v-6h6v6" />',
     calendar: '<rect x="3" y="5" width="18" height="16" rx="2" /><path d="M16 3v4M8 3v4M3 10h18" />',
@@ -1224,6 +1373,17 @@ function workCategory(work) {
   return work.category || work.process || 'その他';
 }
 
+function calendarWorkLabel(category) {
+  return {
+    '配線作業': '配線',
+    '配管工事': '配管',
+    '器具取付': '器具',
+    '絶縁測定': '測定',
+    '通電確認': '通電',
+    '清掃・片付け': '片付け',
+  }[category] || category;
+}
+
 function calendarCategoryTone(category) {
   if (/墨出し|絶縁|検査/.test(category)) return 'green';
   if (/配管|分電盤|通電/.test(category)) return 'blue';
@@ -1267,17 +1427,28 @@ function homeDashboardScreen() {
         ${homeSecondaryCard('photos', 'photo', '写真メモ', '現場写真やメモを記録・確認')}
       </section>
 
+      <section class="home-secondary-grid home-secondary-tool-grid" aria-label="工具・資材検索">
+        ${homeSecondaryCard('tools', 'tool', '工具・資材検索', '工程に必要な道具を検索・確認')}
+      </section>
+
       ${homeWorkList(listDate, works, today, tomorrow)}
     </div>
   `;
 }
 
 function homeFeatureCard(tone, title, body, actionAttribute) {
+  const compactBody = {
+    green: '今日の現場と作業を確認',
+    blue: '明日の予定と準備を確認',
+    yellow: 'お知らせと注意事項を確認',
+    purple: '月間カレンダーから検索',
+  }[tone] || body;
+
   return `
     <button class="home-feature-card home-feature-${tone}" ${actionAttribute} type="button">
       ${homeFeatureVisual(tone)}
       <strong>${title}</strong>
-      <small>${body}</small>
+      <small>${compactBody}</small>
       <span class="home-feature-arrow" aria-hidden="true">${lineIcon('chevron')}</span>
     </button>
   `;
@@ -1416,7 +1587,10 @@ function monthCalendarGrid(month, works, selectedDate) {
           <button class="month-calendar-day ${date.getMonth() !== month.getMonth() ? 'is-outside' : ''} ${key === selectedDate ? 'is-selected' : ''}" data-calendar-day="${key}" type="button" aria-label="${longDateLabel(key)} ${dayWorks.length}件">
             <span class="calendar-day-number">${date.getDate()}</span>
             <span class="calendar-day-events">
-              ${visible.map(work => `<small class="calendar-event-label tone-${calendarCategoryTone(workCategory(work))}">${escapeHTML(workCategory(work))}</small>`).join('')}
+              ${visible.map(work => {
+                const fullLabel = workCategory(work);
+                return `<small class="calendar-event-label tone-${calendarCategoryTone(fullLabel)}" title="${escapeHTML(fullLabel)}" aria-label="${escapeHTML(fullLabel)}"><span class="calendar-event-label-compact">${escapeHTML(calendarWorkLabel(fullLabel))}</span><span class="calendar-event-label-full">${escapeHTML(fullLabel)}</span></small>`;
+              }).join('')}
               ${dayWorks.length > 2 ? `<small class="calendar-more">ほか${dayWorks.length - 2}件</small>` : ''}
             </span>
           </button>
@@ -1463,7 +1637,7 @@ function noticesScreen() {
           </button>
         `).join('')}
       </div>
-      <p class="screen-footnote">β版のサンプル連絡事項です。外部通信は行いません。</p>
+      <p class="screen-footnote">β版のサンプル連絡事項です。外部商品検索はボタン操作時に別サイトを開きます。</p>
     </div>
   `;
 }
@@ -1490,21 +1664,191 @@ function menuScreen() {
     <div class="menu-screen">
       <header class="utility-screen-header"><div><p class="eyebrow">All features</p><h2>メニュー</h2></div><span>既存機能</span></header>
       ${quickNavigation()}
-      <section class="public-beta-notice" aria-label="公開β版の注意事項">
-        <strong>操作検証用のサンプル版です</strong>
-        <p>実在する氏名・住所・現場写真・図面は入力しないでください。</p>
-        <ul>
-          <li>データはこの端末のブラウザ内に保存されます。</li>
-          <li>本番用ログイン・権限管理・クラウド保存は未実装です。</li>
-          <li>入力内容の外部送信は行いません。</li>
-        </ul>
-      </section>
+      ${publicDataNotice()}
       <section class="menu-settings" aria-label="表示と保存の設定">
         <div><strong>表示と保存</strong><small>この端末のブラウザ内に保存されます</small></div>
         <label class="premium-switch"><span>${state.premium ? '有料版' : '無料版'}</span><input type="checkbox" ${state.premium ? 'checked' : ''} data-action="toggle-premium" aria-label="有料版表示を切り替え"></label>
         <div class="save-status save-status-${saveStatus.tone}" aria-live="polite"><span>${saveStatus.label}</span><small>${saveStatus.detail}</small></div>
         <button class="reset-sample-button" data-action="reset-sample" type="button">${lineIcon('reset')}<span>サンプルデータに戻す</span></button>
       </section>
+    </div>
+  `;
+}
+
+function activeTool() {
+  return state.tools.find(tool => tool.id === state.activeToolId) || state.tools[0];
+}
+
+function toolCategoryTone(category) {
+  return {
+    '手工具': 'hand',
+    '電動工具': 'power',
+    '測定器': 'measure',
+    '安全用品': 'safety',
+    '消耗品': 'consumable',
+    '配線材料': 'wiring',
+    '取付材料': 'fixture',
+    'その他': 'other'
+  }[category] || 'other';
+}
+
+function toolOptionList(options, selected) {
+  return ['すべて', ...options].map(option => `
+    <option value="${escapeHTML(option)}" ${option === selected ? 'selected' : ''}>${escapeHTML(option)}</option>
+  `).join('');
+}
+
+function filteredTools() {
+  const filters = state.toolFilters || {};
+  const keyword = String(filters.keyword || '').trim().toLowerCase();
+
+  return state.tools.filter(tool => {
+    const text = [
+      tool.name,
+      tool.reading,
+      ...(tool.aliases || []),
+      tool.category,
+      ...(tool.processes || []),
+      tool.purpose,
+      tool.beginnerNote,
+      tool.searchKeyword
+    ].join(' ').toLowerCase();
+    const searchText = tool.category === '測定器' ? `${text} 測る` : text;
+    const matchesKeyword = !keyword || searchText.includes(keyword);
+    const matchesCategory = !filters.category || filters.category === 'すべて' || tool.category === filters.category;
+    const matchesProcess = !filters.process || filters.process === 'すべて' || (tool.processes || []).includes(filters.process);
+    const matchesFavorite = !filters.favoriteOnly || tool.favorite;
+    return matchesKeyword && matchesCategory && matchesProcess && matchesFavorite;
+  });
+}
+
+function toolFavoriteButton(tool, compact = false) {
+  return `
+    <button class="tool-favorite-button ${tool.favorite ? 'is-active' : ''} ${compact ? 'is-compact' : ''}" data-tool-favorite="${tool.id}" type="button" aria-pressed="${tool.favorite}">
+      ${lineIcon('heart')}<span>${tool.favorite ? 'お気に入り済み' : 'お気に入り'}</span>
+    </button>
+  `;
+}
+
+function toolPackingControl(tool, compact = false) {
+  return `
+    <label class="tool-packing-control ${tool.packingChecked ? 'is-checked' : ''} ${compact ? 'is-compact' : ''}">
+      <input type="checkbox" data-tool-packing="${tool.id}" ${tool.packingChecked ? 'checked' : ''}>
+      <span>${lineIcon('check')}持ち物チェック</span>
+    </label>
+  `;
+}
+
+function toolCard(tool) {
+  const tone = toolCategoryTone(tool.category);
+  const isSelected = tool.id === state.activeToolId;
+  const inlineDetailId = `tool-inline-detail-${tool.id}`;
+  return `
+    <article class="tool-card tool-card-${tone} ${isSelected ? 'is-selected' : ''}" data-tool-id="${tool.id}">
+      <button class="tool-card-main" data-tool-select="${tool.id}" type="button" aria-expanded="${isSelected && toolDetailExpanded}"${isSelected ? ` aria-controls="${inlineDetailId}"` : ''}>
+        <span class="tool-card-icon" aria-hidden="true">${lineIcon('tool')}</span>
+        <span class="tool-card-copy">
+          <span class="tool-card-topline"><small>${escapeHTML(tool.category)}</small>${tool.favorite ? `<span class="tool-favorite-mark">${lineIcon('heart')}</span>` : ''}</span>
+          <strong>${escapeHTML(tool.name)}</strong>
+          <small>${escapeHTML(tool.reading)} / ${(tool.processes || []).slice(0, 2).map(escapeHTML).join('・')}</small>
+        </span>
+        <span class="tool-card-arrow" aria-hidden="true">${lineIcon('chevron')}</span>
+      </button>
+      <div class="tool-card-actions">
+        ${toolFavoriteButton(tool, true)}
+        ${toolPackingControl(tool, true)}
+      </div>
+      ${isSelected ? `<div class="tool-inline-detail${toolDetailExpanded ? '' : ' is-collapsed'}" id="${inlineDetailId}">${toolDetailCard(tool)}</div>` : ''}
+    </article>
+  `;
+}
+
+function toolDetailCard(tool) {
+  if (!tool) {
+    return `<section class="tool-detail-card tool-detail-empty"><p>工具を選択すると、用途と確認事項が表示されます。</p></section>`;
+  }
+
+  const tone = toolCategoryTone(tool.category);
+  return `
+    <section class="tool-detail-card tool-detail-${tone}" aria-label="${escapeHTML(tool.name)}の詳細">
+      <header class="tool-detail-header">
+        <div>
+          <span class="tool-category-chip tone-${tone}">${escapeHTML(tool.category)}</span>
+          <h3>${escapeHTML(tool.name)}</h3>
+          <p>${escapeHTML(tool.reading)}${tool.aliases?.length ? ` / ${tool.aliases.map(escapeHTML).join('・')}` : ''}</p>
+        </div>
+        <span class="tool-detail-icon" aria-hidden="true">${lineIcon('tool')}</span>
+      </header>
+      <div class="tool-process-list" aria-label="関連工程">
+        ${(tool.processes || []).map(process => `<span>${escapeHTML(process)}</span>`).join('')}
+      </div>
+      <div class="tool-detail-sections">
+        <section><h4>用途</h4><p>${escapeHTML(tool.purpose)}</p></section>
+        <section><h4>新人向け説明</h4><p>${escapeHTML(tool.beginnerNote)}</p></section>
+        <section><h4>使用前チェック</h4><p>${escapeHTML(tool.preCheck)}</p></section>
+        <section class="tool-detail-warning"><h4>安全上の注意</h4><p>${escapeHTML(tool.safetyNote)}</p></section>
+        <section class="tool-detail-ask"><h4>上司に確認すること</h4><p>${escapeHTML(tool.askSupervisor)}</p></section>
+      </div>
+      <div class="tool-approval-row">
+        <span class="tool-approved-badge ${tool.companyApproved ? 'is-approved' : 'is-unconfirmed'}">${tool.companyApproved ? '会社指定品の候補' : '会社指定は要確認'}</span>
+        <small>会社ルール・現場責任者の指示を優先</small>
+      </div>
+      <div class="tool-detail-actions">
+        ${toolFavoriteButton(tool)}
+        ${toolPackingControl(tool)}
+        <a class="tool-shop-button" href="${toolExternalSearchURL(tool)}" target="_blank" rel="noopener noreferrer">${lineIcon('external')}<span>モノタロウで検索</span></a>
+      </div>
+      <p class="tool-external-note">外部の商品検索サイトが開きます。商品仕様・価格・在庫は移動先のサイトで確認してください。</p>
+      <p class="tool-external-note tool-non-affiliation-note">本アプリは株式会社MonotaROの公式サービスまたは提携サービスではありません。</p>
+    </section>
+  `;
+}
+
+function toolExternalSearchURL(tool) {
+  return `https://www.monotaro.com/s/?q=${encodeURIComponent(tool.searchKeyword || tool.name)}`;
+}
+
+function toolSearchScreen() {
+  const filters = state.toolFilters || {};
+  const results = filteredTools();
+  const selected = activeTool();
+  const packingCount = state.tools.filter(tool => tool.packingChecked).length;
+  const favoriteCount = state.tools.filter(tool => tool.favorite).length;
+
+  return `
+    <div class="tool-search-screen">
+      <header class="utility-screen-header tool-screen-header">
+        <div><p class="eyebrow">Field tools</p><h2>工具・資材検索</h2></div>
+        <span>${state.tools.length}件</span>
+      </header>
+      <section class="tool-safety-banner" aria-label="安全に関する注意">
+        <span class="tool-safety-icon" aria-hidden="true">${lineIcon('shield')}</span>
+        <p>工具・材料の選定、測定方法、施工判断は、所属会社のルール、現場責任者、上司、有資格者の指示を優先してください。</p>
+      </section>
+      <section class="tool-search-panel" aria-label="工具・資材を検索">
+        <label class="tool-search-field">
+          ${lineIcon('search')}
+          <input type="search" value="${escapeHTML(filters.keyword || '')}" data-tool-filter="keyword" placeholder="工具名・読み方・用途で検索" aria-label="工具・資材を検索">
+        </label>
+        <div class="tool-filter-grid">
+          <label><span>カテゴリ</span><select data-tool-filter="category">${toolOptionList(toolCategories, filters.category)}</select></label>
+          <label><span>工程</span><select data-tool-filter="process">${toolOptionList(toolProcesses, filters.process)}</select></label>
+        </div>
+        <div class="tool-search-actions">
+          <button class="tool-favorite-filter ${filters.favoriteOnly ? 'is-active' : ''}" data-action="toggle-tool-favorites" type="button" aria-pressed="${Boolean(filters.favoriteOnly)}">${lineIcon('heart')}お気に入り <span>${favoriteCount}</span></button>
+          <span class="tool-packing-count">${lineIcon('check')}持ち物 ${packingCount}件</span>
+          <button class="tool-clear-button" data-action="clear-tool-filters" type="button">条件をクリア</button>
+        </div>
+      </section>
+      <div class="tool-results-heading"><strong>検索結果 ${results.length}件</strong><small>工具名・別名・用途・工程から部分一致</small></div>
+      <div class="tool-layout">
+        <section class="tool-list" aria-label="工具一覧">
+          ${results.length ? results.map(toolCard).join('') : '<p class="tool-empty-state">条件に合う工具がありません。キーワードや絞り込みを変更してください。</p>'}
+        </section>
+        <aside class="tool-detail-panel">
+          ${toolDetailCard(selected)}
+        </aside>
+      </div>
     </div>
   `;
 }
@@ -1834,12 +2178,24 @@ function detailActionButtons({ scheduleId, workId, photoId, caseId }) {
   `;
 }
 
-function safetyNotice() {
+function publicDataNotice() {
   return `
-    <aside class="notice">
-      このアプリは、第二種電気工事士の新人社員向けの予習・記録・確認支援ツールです。実際の施工判断は、所属会社のルール、現場責任者、上司、有資格者の指示に従ってください。
+    <aside class="notice public-data-notice" aria-label="公開β版の保存と外部サイトについて">
+      <strong>公開β版の保存・外部サイトについて</strong>
+      <ul>
+        <li>入力したデータはこのブラウザ内のlocalStorageへ保存されます。</li>
+        <li>アプリが保存データを外部へアップロードする機能はありません。</li>
+        <li>外部商品検索ボタンを押すと第三者のサイトが開きます。</li>
+        <li>外部サイトでは、そのサイトのプライバシーポリシーやCookie方針が適用されます。</li>
+        <li>実在する氏名、住所、顧客情報、現場写真、図面を入力しないでください。</li>
+        <li>施工判断は所属会社、上司、現場責任者、有資格者の指示を優先してください。</li>
+      </ul>
     </aside>
   `;
+}
+
+function safetyNotice() {
+  return publicDataNotice();
 }
 
 function miniPhotoList(photos, schedule) {
@@ -1939,6 +2295,7 @@ function activeScreen() {
   if (state.activeTab === 'notices') return noticesScreen();
   if (state.activeTab === 'record') return recordMenuScreen();
   if (state.activeTab === 'menu') return menuScreen();
+  if (state.activeTab === 'tools') return toolSearchScreen();
 
   if (state.activeTab === 'projects') {
     return projectsScreen();
@@ -2129,13 +2486,19 @@ function projectDetail(project) {
 
 function projectForm(project) {
   return `
-    <section class="project-form" aria-label="案件作成フォーム">
-      <div>
+    <details class="project-form mobile-disclosure" aria-label="案件作成フォーム">
+      <summary class="project-form-summary">
+        <div>
         <p class="eyebrow">Create / Edit</p>
         <h3>案件作成フォーム</h3>
         <p>入力内容は、案件一覧・トップ概要・工程表・担当者別工事・写真メモの案件名表示へ画面上で反映されます。</p>
-      </div>
-      <div class="project-form-grid">
+        </div>
+        <span class="disclosure-hint">編集するボタンから開く</span>
+      </summary>
+      <div class="project-form-content">
+      <details class="form-disclosure" open>
+        <summary>基本情報・担当者情報</summary>
+        <div class="project-form-grid">
         <label>
           <span>案件名</span>
           <input type="text" value="${escapeHTML(project.title)}" data-project-field="title">
@@ -2182,7 +2545,11 @@ function projectForm(project) {
           <span>完了予定日</span>
           <input type="date" value="${projectInputDate(project.endDate)}" data-project-field="endDate">
         </label>
-      </div>
+        </div>
+      </details>
+      <details class="form-disclosure" open>
+        <summary>メモ・上司確認</summary>
+        <div class="project-form-notes">
       <label class="field">
         <span>現場メモ</span>
         <textarea rows="3" data-project-field="memo">${escapeHTML(project.memo || '')}</textarea>
@@ -2191,11 +2558,14 @@ function projectForm(project) {
         <span>上司に確認すること</span>
         <textarea rows="3" data-project-field="supervisorQuestion">${escapeHTML(project.supervisorQuestion || '')}</textarea>
       </label>
+        </div>
+      </details>
       <div class="project-form-actions">
         <button class="primary-button" data-action="create-project" type="button">新規案件として追加</button>
         <button data-action="update-project" type="button">選択中の案件を更新</button>
       </div>
-    </section>
+      </div>
+    </details>
   `;
 }
 
@@ -2219,11 +2589,15 @@ function peopleMasterScreen() {
           </button>
         `).join('')}
       </section>
-      <section class="person-editor" aria-label="担当者編集">
-        <div>
+      <details class="person-editor mobile-disclosure" aria-label="担当者編集" open>
+        <summary class="person-editor-summary">
+          <div>
           <p class="eyebrow">Edit person</p>
           <h3>${person.name}</h3>
-        </div>
+          </div>
+          <span class="disclosure-hint">担当者情報を開閉</span>
+        </summary>
+        <div class="person-editor-content">
         <div class="person-form-grid">
           <label>
             <span>担当者名</span>
@@ -2251,7 +2625,8 @@ function peopleMasterScreen() {
           <button data-action="update-person" type="button">編集を反映</button>
           <button data-action="delete-person" type="button">削除</button>
         </div>
-      </section>
+        </div>
+      </details>
     </div>
     <section class="master-link-note" aria-label="担当者マスタの反映先">
       <span>反映先</span>
@@ -2880,12 +3255,16 @@ function schedulePersonControls(item) {
 
 function photoUploadPanel(item) {
   return `
-    <section class="photo-form" aria-label="写真追加">
-      <div>
+    <details class="photo-form mobile-disclosure" aria-label="写真追加" open>
+      <summary class="photo-form-summary">
+        <div>
         <p class="eyebrow">Photo memo</p>
         <h3>写真追加・写真メモ</h3>
         <p>画像を選択すると、このブラウザ上だけで写真プレビューを追加します。本番アップロードやクラウド保存はまだ行いません。</p>
-      </div>
+        </div>
+        <span class="disclosure-hint">写真追加フォームを開閉</span>
+      </summary>
+      <div class="photo-form-content">
       <aside class="notice photo-notice">
         この写真機能は、現場記録・上司確認・過去事例整理のためのものです。実際の施工判断は、所属会社のルール、現場責任者、上司、有資格者の指示に従ってください。
       </aside>
@@ -2945,7 +3324,8 @@ function photoUploadPanel(item) {
         <small>選択すると、この画面内にプレビュー付き写真メモカードを追加します。</small>
         <input type="file" accept="image/*" multiple data-action="add-photo">
       </label>
-    </section>
+      </div>
+    </details>
   `;
 }
 
@@ -3123,7 +3503,7 @@ function betaTestScreen() {
       </div>
       <div class="progress-ring" aria-label="βテスト確認率 ${percent}%">${percent}%</div>
     </div>
-    <p class="lead">βテスト担当者や新人電気工事士さんが、1案件だけ実際に触って確認するためのチェック表です。入力内容はこのブラウザのlocalStorageに保存します。</p>
+    <p class="lead">βテスターや新人電気工事士さんが、1案件だけ実際に触って確認するためのチェック表です。入力内容はこのブラウザのlocalStorageに保存します。</p>
     <aside class="notice">
       βテスト用チェック表は、本番ログイン、本番DB、クラウド保存、決済なしの画面モックです。実際の施工判断は、所属会社のルール、現場責任者、上司、有資格者の指示に従ってください。
     </aside>
@@ -3273,6 +3653,18 @@ document.addEventListener('input', (event) => {
     return;
   }
 
+  if (target.matches('[data-tool-filter="keyword"]')) {
+    const cursor = target.selectionStart;
+    state.toolFilters.keyword = target.value;
+    render();
+    requestAnimationFrame(() => {
+      const input = document.querySelector('[data-tool-filter="keyword"]');
+      input?.focus();
+      if (input && cursor !== null) input.setSelectionRange(cursor, cursor);
+    });
+    return;
+  }
+
   if (target.matches('[data-project-field]')) {
     setSaveStatus('未保存', 'unsaved', '案件フォームの変更は追加または更新で保存されます');
     return;
@@ -3300,6 +3692,19 @@ document.addEventListener('change', async (event) => {
 
   if (target.matches('[data-action="set-calendar-person"]')) {
     state.calendarPerson = target.value;
+    render();
+    return;
+  }
+
+  if (target.matches('[data-tool-filter="category"], [data-tool-filter="process"]')) {
+    state.toolFilters[target.dataset.toolFilter] = target.value;
+    render();
+    return;
+  }
+
+  if (target.matches('[data-tool-packing]')) {
+    const tool = state.tools.find(item => item.id === target.dataset.toolPacking);
+    if (tool) tool.packingChecked = target.checked;
     render();
     return;
   }
@@ -3437,6 +3842,43 @@ document.addEventListener('click', (event) => {
     return;
   }
 
+  const toggleToolFavoritesTarget = event.target.closest('[data-action="toggle-tool-favorites"]');
+  if (toggleToolFavoritesTarget) {
+    state.toolFilters.favoriteOnly = !state.toolFilters.favoriteOnly;
+    render();
+    return;
+  }
+
+  const clearToolFiltersTarget = event.target.closest('[data-action="clear-tool-filters"]');
+  if (clearToolFiltersTarget) {
+    state.toolFilters = { keyword: '', category: 'すべて', process: 'すべて', favoriteOnly: false };
+    render();
+    return;
+  }
+
+  const toolFavoriteTarget = event.target.closest('[data-tool-favorite]');
+  if (toolFavoriteTarget) {
+    const tool = state.tools.find(item => item.id === toolFavoriteTarget.dataset.toolFavorite);
+    if (tool) tool.favorite = !tool.favorite;
+    render();
+    return;
+  }
+
+  const toolSelectTarget = event.target.closest('[data-tool-select]');
+  if (toolSelectTarget) {
+    const nextToolId = toolSelectTarget.dataset.toolSelect;
+    const compactViewport = isCompactToolViewport();
+    if (compactViewport && state.activeToolId === nextToolId) {
+      toolDetailExpanded = !toolDetailExpanded;
+    } else {
+      state.activeToolId = nextToolId;
+      toolDetailExpanded = true;
+    }
+    render();
+    if (compactViewport && toolDetailExpanded) scrollToToolCard(nextToolId);
+    return;
+  }
+
   const homeWorkDateTarget = event.target.closest('[data-home-work-date]');
   if (homeWorkDateTarget) {
     state.homeListDate = homeWorkDateTarget.dataset.homeWorkDate;
@@ -3532,14 +3974,27 @@ document.addEventListener('click', (event) => {
   if (openProjectCreateTarget) {
     state.activeTab = 'projects';
     render();
-    requestAnimationFrame(() => document.querySelector('.project-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+    requestAnimationFrame(() => {
+      const projectFormElement = document.querySelector('.project-form');
+      if (projectFormElement) {
+        projectFormElement.open = true;
+        projectFormElement.classList.add('is-open');
+    projectFormElement.scrollIntoView({ behavior: getScrollBehavior(), block: 'start' });
+        projectFormElement.querySelector('input')?.focus({ preventScroll: true });
+      }
+    });
     return;
   }
 
   const focusProjectFormTarget = event.target.closest('[data-action="focus-project-form"]');
   if (focusProjectFormTarget) {
-    document.querySelector('.project-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    document.querySelector('.project-form input')?.focus({ preventScroll: true });
+    const projectFormElement = document.querySelector('.project-form');
+    if (projectFormElement) {
+      projectFormElement.open = true;
+      projectFormElement.classList.add('is-open');
+    projectFormElement.scrollIntoView({ behavior: getScrollBehavior(), block: 'start' });
+      projectFormElement.querySelector('input')?.focus({ preventScroll: true });
+    }
     return;
   }
 
@@ -3798,7 +4253,7 @@ document.addEventListener('keydown', (event) => {
 function scrollToScheduleDetail() {
   requestAnimationFrame(() => {
     document.querySelector('#schedule-detail')?.scrollIntoView({
-      behavior: 'smooth',
+      behavior: getScrollBehavior(),
       block: 'start'
     });
   });
@@ -3807,7 +4262,7 @@ function scrollToScheduleDetail() {
 function scrollToCaseDetail() {
   requestAnimationFrame(() => {
     document.querySelector('#case-detail')?.scrollIntoView({
-      behavior: 'smooth',
+      behavior: getScrollBehavior(),
       block: 'start'
     });
   });
@@ -3816,7 +4271,7 @@ function scrollToCaseDetail() {
 function scrollToProjectDetail() {
   requestAnimationFrame(() => {
     document.querySelector('#project-detail')?.scrollIntoView({
-      behavior: 'smooth',
+      behavior: getScrollBehavior(),
       block: 'start'
     });
   });
@@ -3825,7 +4280,7 @@ function scrollToProjectDetail() {
 function scrollToAssigneeDetail() {
   requestAnimationFrame(() => {
     document.querySelector('#assignee-detail')?.scrollIntoView({
-      behavior: 'smooth',
+      behavior: getScrollBehavior(),
       block: 'start'
     });
   });
@@ -3834,7 +4289,7 @@ function scrollToAssigneeDetail() {
 function scrollToCalendarDayDetail() {
   requestAnimationFrame(() => {
     document.querySelector('#calendar-day-detail')?.scrollIntoView({
-      behavior: 'smooth',
+      behavior: getScrollBehavior(),
       block: 'start'
     });
   });
@@ -3843,7 +4298,7 @@ function scrollToCalendarDayDetail() {
 function scrollToPhotoCard(photoId) {
   requestAnimationFrame(() => {
     document.querySelector(`[data-photo-card-id="${photoId}"]`)?.scrollIntoView({
-      behavior: 'smooth',
+      behavior: getScrollBehavior(),
       block: 'start'
     });
   });
@@ -3852,7 +4307,25 @@ function scrollToPhotoCard(photoId) {
 function scrollToPhotoList() {
   requestAnimationFrame(() => {
     document.querySelector('.photo-section')?.scrollIntoView({
-      behavior: 'smooth',
+      behavior: getScrollBehavior(),
+      block: 'start'
+    });
+  });
+}
+
+function getScrollBehavior() {
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  return prefersReducedMotion ? 'auto' : 'smooth';
+}
+
+function isCompactToolViewport() {
+  return window.matchMedia('(max-width: 719px)').matches;
+}
+
+function scrollToToolCard(toolId) {
+  requestAnimationFrame(() => {
+    [...document.querySelectorAll('[data-tool-id]')].find((card) => card.dataset.toolId === toolId)?.scrollIntoView({
+      behavior: getScrollBehavior(),
       block: 'start'
     });
   });
