@@ -9233,3 +9233,205 @@ body {
     transform: translateX(-50%);
   }
 }
+
+/* Information architecture: make the beta menu category-first and keep
+   each action's purpose visible at the point of choice. */
+.menu-screen .quick-nav {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  overflow: visible;
+}
+
+.menu-screen .quick-nav-group {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(8, 116, 94, 0.18);
+  border-radius: 18px;
+  box-shadow: var(--beta-neo3-shadow);
+}
+
+.menu-screen .quick-nav-group-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 2px 2px 8px;
+  border-bottom: 1px solid rgba(8, 116, 94, 0.12);
+}
+
+.menu-screen .quick-nav-group-icon {
+  display: grid;
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  background: rgba(8, 116, 94, 0.1);
+  border: 1px solid rgba(8, 116, 94, 0.18);
+  border-radius: 11px;
+  color: var(--beta-neo3-hero-mid);
+}
+
+.menu-screen .quick-nav-group-icon .line-icon {
+  width: 21px;
+  height: 21px;
+}
+
+.menu-screen .quick-nav-group-heading > span:last-child {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.menu-screen .quick-nav-group-heading strong {
+  color: #075847;
+  font-size: 14px;
+  line-height: 1.25;
+}
+
+.menu-screen .quick-nav-group-heading small {
+  overflow-wrap: anywhere;
+  color: #506860;
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.menu-screen .quick-nav-group-items {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.menu-screen .quick-nav-group .quick-nav-item {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 18px;
+  align-items: center;
+  gap: 8px;
+  min-height: 72px;
+  padding: 10px;
+  background: rgba(248, 253, 251, 0.94);
+  border: 1px solid rgba(8, 116, 94, 0.16);
+  border-radius: 14px;
+  box-shadow: 0 6px 16px rgba(7, 88, 71, 0.08);
+  color: #17342b;
+  text-align: left;
+}
+
+.menu-screen .quick-nav-group .quick-nav-item.is-active {
+  background: #e6f7ee;
+  border-color: rgba(8, 116, 94, 0.42);
+  color: #075847;
+}
+
+.menu-screen .quick-nav-group .quick-nav-item .tab-icon {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  background: #e4f5ed;
+  border-radius: 10px;
+  color: #08745d;
+}
+
+.menu-screen .quick-nav-item-copy {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.menu-screen .quick-nav-item-copy strong {
+  overflow-wrap: anywhere;
+  color: #17342b;
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.menu-screen .quick-nav-item-copy small {
+  overflow-wrap: anywhere;
+  color: #506860;
+  font-size: 10px;
+  line-height: 1.3;
+}
+
+.menu-screen .quick-nav-item-arrow {
+  display: grid;
+  place-items: center;
+  color: #08745d;
+}
+
+.menu-screen .quick-nav-item-arrow .line-icon {
+  width: 17px;
+  height: 17px;
+}
+
+.menu-screen .quick-nav-group-record .quick-nav-group-icon,
+.menu-screen .quick-nav-group-record .quick-nav-item .tab-icon {
+  background: #f0eaff;
+  border-color: rgba(118, 80, 203, 0.24);
+  color: #7650cb;
+}
+
+.menu-screen .quick-nav-group-reference .quick-nav-group-icon,
+.menu-screen .quick-nav-group-reference .quick-nav-item .tab-icon {
+  background: #eff9df;
+  border-color: rgba(83, 139, 47, 0.24);
+  color: #4e8a2e;
+}
+
+.menu-screen .quick-nav-group-prepare .quick-nav-group-icon,
+.menu-screen .quick-nav-group-prepare .quick-nav-item .tab-icon {
+  background: #fff4d9;
+  border-color: rgba(231, 165, 27, 0.3);
+  color: #9b6900;
+}
+
+.menu-screen .quick-nav-group-labs .quick-nav-group-icon,
+.menu-screen .quick-nav-group-labs .quick-nav-item .tab-icon {
+  background: #e4f6fb;
+  border-color: rgba(47, 184, 223, 0.3);
+  color: #167b9b;
+}
+
+.screen-home .home-work-group {
+  width: fit-content;
+  max-width: 100%;
+  padding: 4px 8px;
+  background: #eff9df;
+  border: 1px solid rgba(83, 139, 47, 0.24);
+  border-radius: 999px;
+  color: #4e8a2e;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.calendar-detail-main small:first-of-type {
+  color: #506860;
+  font-weight: 700;
+}
+
+@media (min-width: 721px) {
+  .menu-screen .quick-nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+}
+
+@media (max-width: 420px) {
+  .menu-screen .quick-nav-group {
+    padding: 10px;
+  }
+
+  .menu-screen .quick-nav-group-items {
+    gap: 7px;
+  }
+
+  .menu-screen .quick-nav-group .quick-nav-item {
+    min-height: 68px;
+    padding: 9px;
+  }
+}

@@ -777,6 +777,41 @@ const tabs = [
 const primaryTabIds = ['home', 'calendar', 'record', 'notices', 'menu'];
 const quickTabIds = ['notes', 'before', 'schedule', 'assignments', 'cases', 'projects', 'photos', 'tools', 'people', 'after', 'beta'];
 
+const tabInfo = {
+  home: { category: 'ホーム', description: '今日の現場状況を俯瞰' },
+  calendar: { category: '検索・参照', description: '日付と条件から工程を探す' },
+  record: { category: '記録・共有', description: '写真・メモ・案件を残す' },
+  notices: { category: '記録・共有', description: '連絡と注意事項を確認' },
+  menu: { category: '機能一覧', description: '目的別に機能を選ぶ' },
+  projects: { category: '検索・管理', description: '案件と現場情報を管理' },
+  notes: { category: '記録・共有', description: '現場で使う要点をメモ' },
+  before: { category: '準備・振り返り', description: '安全と手順を確認' },
+  schedule: { category: '現場確認', description: '工程と進捗を確認' },
+  assignments: { category: '現場確認', description: '担当者別に作業を確認' },
+  cases: { category: '検索・管理', description: '過去の対応を参照' },
+  photos: { category: '記録・共有', description: '写真とメモを残す' },
+  tools: { category: '検索・管理', description: '工具・資材を探す' },
+  people: { category: '現場確認', description: '連絡先と役割を確認' },
+  after: { category: '準備・振り返り', description: '一日の学びを整理' },
+  beta: { category: '機能一覧', description: '新機能を検証' }
+};
+
+const navigationCategories = [
+  { id: 'field', label: '現場確認', description: '工程・担当・進捗をまとめて確認', icon: 'flow', tabIds: ['schedule', 'assignments', 'people'] },
+  { id: 'record', label: '記録・共有', description: '写真・メモ・連絡を残して伝える', icon: 'memo', tabIds: ['notes', 'photos'] },
+  { id: 'reference', label: '検索・管理', description: '案件・工具・過去事例を必要な時に探す', icon: 'case', tabIds: ['projects', 'tools', 'cases'] },
+  { id: 'prepare', label: '準備・振り返り', description: '仕事前後の確認事項を整理する', icon: 'prep', tabIds: ['before', 'after'] },
+  { id: 'labs', label: '検証', description: '新しい機能を試す', icon: 'beta', tabIds: ['beta'] }
+];
+
+function tabCategoryLabel(tabId) {
+  return tabInfo[tabId]?.category || '機能一覧';
+}
+
+function tabDescription(tabId) {
+  return tabInfo[tabId]?.description || '';
+}
+
 const projectTypeOptions = ['新築', 'リフォーム', 'エアコン', '配線', '器具取付', '検査', '是正'];
 const caseTypeOptions = ['すべて', '新築', 'リフォーム', 'エアコン', '配線', '器具取付', '検査', '是正'];
 const caseProcessOptions = ['すべて', '図面確認', '配線', '取付', '検査', '手直し'];
@@ -1053,11 +1088,22 @@ function screenCharacterVisual() {
 function quickNavigation() {
   return `
     <nav class="quick-nav" aria-label="主要機能">
-      ${quickTabIds.map(tabId => tabs.find(tab => tab.id === tabId)).filter(Boolean).map(tab => `
-        <button class="quick-nav-item ${state.activeTab === tab.id ? 'is-active' : ''}" data-tab="${tab.id}" type="button">
-          <span class="tab-icon tab-icon-${tab.icon}" aria-hidden="true">${lineIcon(tab.icon)}</span>
-          <span>${tab.label}</span>
-        </button>
+      ${navigationCategories.map(category => `
+        <section class="quick-nav-group quick-nav-group-${category.id}" data-info-category="${category.id}">
+          <header class="quick-nav-group-heading">
+            <span class="quick-nav-group-icon" aria-hidden="true">${lineIcon(category.icon)}</span>
+            <span><strong>${category.label}</strong><small>${category.description}</small></span>
+          </header>
+          <div class="quick-nav-group-items">
+            ${category.tabIds.map(tabId => tabs.find(tab => tab.id === tabId)).filter(Boolean).map(tab => `
+              <button class="quick-nav-item ${state.activeTab === tab.id ? 'is-active' : ''}" data-tab="${tab.id}" data-info-category="${category.id}" type="button">
+                <span class="tab-icon tab-icon-${tab.icon}" aria-hidden="true">${lineIcon(tab.icon)}</span>
+                <span class="quick-nav-item-copy"><strong>${tab.label}</strong><small>${tabDescription(tab.id)}</small></span>
+                <span class="quick-nav-item-arrow" aria-hidden="true">${lineIcon('chevron')}</span>
+              </button>
+            `).join('')}
+          </div>
+        </section>
       `).join('')}
     </nav>
   `;
@@ -1369,6 +1415,18 @@ function workFloor(work) {
   return work.floor || work.site || '現場';
 }
 
+const workCategoryGroups = [
+  { label: '準備・確認', pattern: /図面確認|墨出し/ },
+  { label: '施工', pattern: /配管|配線|器具取付|分電盤/ },
+  { label: '検査・安全', pattern: /絶縁|通電|検査/ },
+  { label: '完了・整理', pattern: /清掃|片付け|手直し|是正/ }
+];
+
+function workCategoryGroup(category) {
+  const match = workCategoryGroups.find(item => item.pattern.test(String(category || '')));
+  return match?.label || 'その他';
+}
+
 function workCategory(work) {
   return work.category || work.process || 'その他';
 }
@@ -1491,10 +1549,10 @@ function homeFeatureCard(tone, title, body, actionAttribute) {
   }[tone] || body;
   const monthPrefix = String(state.homeDate || '').slice(0, 7);
   const featureMeta = {
-    green: `${worksForDate(state.homeDate).length}件の工事予定`,
-    blue: `${worksForDate(shiftDate(state.homeDate, 1)).length}件の工事予定`,
-    yellow: `未読 ${(state.notices || []).filter(item => !item.read).length}件`,
-    purple: `今月 ${(state.dailyWorks || []).filter(work => String(work.date || '').startsWith(monthPrefix)).length}件`,
+    green: `${tabCategoryLabel('schedule')} · ${worksForDate(state.homeDate).length}件の工事予定`,
+    blue: `${tabCategoryLabel('schedule')} · ${worksForDate(shiftDate(state.homeDate, 1)).length}件の工事予定`,
+    yellow: `${tabCategoryLabel('notices')} · 未読 ${(state.notices || []).filter(item => !item.read).length}件`,
+    purple: `${tabCategoryLabel('calendar')} · 今月 ${(state.dailyWorks || []).filter(work => String(work.date || '').startsWith(monthPrefix)).length}件`,
   }[tone] || '';
 
   return `
@@ -1533,11 +1591,12 @@ function homeSecondaryCard(tab, icon, title, body) {
     tools: `持ち物${(state.tools || []).filter(tool => tool.packingChecked).length}件`
   };
   const status = statusByTab[tab] || body;
+  const category = tabCategoryLabel(tab);
 
   return `
     <button class="home-secondary-card home-secondary-${tab}" data-tab="${tab}" type="button">
       <span aria-hidden="true">${lineIcon(icon)}</span>
-      <span><strong>${title}</strong><small class="home-secondary-status">${status}</small></span>
+      <span><strong>${title}</strong><small class="home-secondary-status">${category} · ${status}</small></span>
       <i aria-hidden="true">${lineIcon('chevron')}</i>
     </button>
   `;
@@ -1564,7 +1623,7 @@ function homeWorkRow(work) {
       <span class="home-work-time">${workStartTime(work)}〜${workEndTime(work)}</span>
       <span class="home-work-copy">
         <strong class="home-work-title">${escapeHTML(workProjectTitle(work))}</strong>
-        <span class="home-work-meta"><span class="home-work-category">${escapeHTML(workCategory(work))}</span><span class="home-work-place">${escapeHTML(workFloor(work))} / ${escapeHTML(work.assignee || '担当者未設定')}</span></span>
+        <span class="home-work-meta"><span class="home-work-group">${escapeHTML(workCategoryGroup(workCategory(work)))}</span><span class="home-work-category">${escapeHTML(workCategory(work))}</span><span class="home-work-place">${escapeHTML(workFloor(work))} / ${escapeHTML(work.assignee || '担当者未設定')}</span></span>
       </span>
       <span class="home-work-status">${escapeHTML(work.status || '予定')}</span>
       <span class="home-work-arrow" aria-hidden="true">${lineIcon('chevron')}</span>
@@ -1679,7 +1738,7 @@ function calendarWorkRow(work) {
   return `
     <button class="calendar-detail-row" data-work-id="${work.id}" type="button">
       <span class="calendar-detail-time">${workStartTime(work)}〜${workEndTime(work)}</span>
-      <span class="calendar-detail-main"><strong>${escapeHTML(workCategory(work))}</strong><small>${escapeHTML(workProjectTitle(work))} / ${escapeHTML(work.site)}</small><small>担当：${escapeHTML(work.assignee)}</small></span>
+      <span class="calendar-detail-main"><strong>${escapeHTML(workCategory(work))}</strong><small>${escapeHTML(workCategoryGroup(workCategory(work)))} · ${escapeHTML(workProjectTitle(work))} / ${escapeHTML(work.site)}</small><small>担当：${escapeHTML(work.assignee)}</small></span>
       <span class="calendar-detail-floor tone-${tone}">${escapeHTML(workFloor(work))}</span>
       <span class="calendar-detail-arrow" aria-hidden="true">${lineIcon('chevron')}</span>
     </button>
@@ -1743,6 +1802,21 @@ function activeTool() {
   return state.tools.find(tool => tool.id === state.activeToolId) || state.tools[0];
 }
 
+const toolCategoryDisplayLabels = {
+  '手工具': '手工具',
+  '電動工具': '電動工具',
+  '測定器': '測定・検査',
+  '安全用品': '安全・保護具',
+  '消耗品': '消耗品・資材',
+  '配線材料': '配線材料',
+  '取付材料': '取付材料',
+  'その他': 'その他'
+};
+
+function toolCategoryLabel(category) {
+  return toolCategoryDisplayLabels[category] || category || 'その他';
+}
+
 function toolCategoryTone(category) {
   return {
     '手工具': 'hand',
@@ -1756,9 +1830,9 @@ function toolCategoryTone(category) {
   }[category] || 'other';
 }
 
-function toolOptionList(options, selected) {
+function toolOptionList(options, selected, labelFor = option => option) {
   return ['すべて', ...options].map(option => `
-    <option value="${escapeHTML(option)}" ${option === selected ? 'selected' : ''}>${escapeHTML(option)}</option>
+    <option value="${escapeHTML(option)}" ${option === selected ? 'selected' : ''}>${escapeHTML(labelFor(option))}</option>
   `).join('');
 }
 
@@ -1812,7 +1886,7 @@ function toolCard(tool) {
       <button class="tool-card-main" data-tool-select="${tool.id}" type="button" aria-expanded="${isSelected && toolDetailExpanded}"${isSelected ? ` aria-controls="${inlineDetailId}"` : ''}>
         <span class="tool-card-icon" aria-hidden="true">${lineIcon('tool')}</span>
         <span class="tool-card-copy">
-          <span class="tool-card-topline"><small>${escapeHTML(tool.category)}</small>${tool.favorite ? `<span class="tool-favorite-mark">${lineIcon('heart')}</span>` : ''}</span>
+          <span class="tool-card-topline"><small>${escapeHTML(toolCategoryLabel(tool.category))}</small>${tool.favorite ? `<span class="tool-favorite-mark">${lineIcon('heart')}</span>` : ''}</span>
           <strong>${escapeHTML(tool.name)}</strong>
           <small>${escapeHTML(tool.reading)} / ${(tool.processes || []).slice(0, 2).map(escapeHTML).join('・')}</small>
         </span>
@@ -1837,7 +1911,7 @@ function toolDetailCard(tool) {
     <section class="tool-detail-card tool-detail-${tone}" aria-label="${escapeHTML(tool.name)}の詳細">
       <header class="tool-detail-header">
         <div>
-          <span class="tool-category-chip tone-${tone}">${escapeHTML(tool.category)}</span>
+          <span class="tool-category-chip tone-${tone}">${escapeHTML(toolCategoryLabel(tool.category))}</span>
           <h3>${escapeHTML(tool.name)}</h3>
           <p>${escapeHTML(tool.reading)}${tool.aliases?.length ? ` / ${tool.aliases.map(escapeHTML).join('・')}` : ''}</p>
         </div>
@@ -1895,7 +1969,7 @@ function toolSearchScreen() {
           <input type="search" value="${escapeHTML(filters.keyword || '')}" data-tool-filter="keyword" placeholder="工具名・読み方・用途で検索" aria-label="工具・資材を検索">
         </label>
         <div class="tool-filter-grid">
-          <label><span>カテゴリ</span><select data-tool-filter="category">${toolOptionList(toolCategories, filters.category)}</select></label>
+          <label><span>カテゴリ</span><select data-tool-filter="category">${toolOptionList(toolCategories, filters.category, toolCategoryLabel)}</select></label>
           <label><span>工程</span><select data-tool-filter="process">${toolOptionList(toolProcesses, filters.process)}</select></label>
         </div>
         <div class="tool-search-actions">
