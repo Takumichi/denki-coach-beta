@@ -1415,6 +1415,7 @@ function homeDashboardScreen() {
         </div>
       </section>
 
+      ${homeTodaySummary(works)}
       <section class="home-feature-grid" aria-label="ホームメニュー">
         ${homeFeatureCard('green', '本日の工事', '今日の現場と作業内容を確認できます', `data-home-work-date="${today}"`)}
         ${homeFeatureCard('blue', '明日の工事', '明日の予定と準備内容を確認できます', `data-home-work-date="${tomorrow}"`)}
@@ -1422,17 +1423,62 @@ function homeDashboardScreen() {
         ${homeFeatureCard('purple', '工程表検索', '工程表をカレンダーで確認・検索できます', 'data-tab="calendar"')}
       </section>
 
-      <section class="home-secondary-grid" aria-label="記録メニュー">
+      <section class="home-secondary-grid home-quick-access" aria-label="クイックアクセス">
         ${homeSecondaryCard('projects', 'site', '案件', '担当現場の情報や図面を確認')}
         ${homeSecondaryCard('photos', 'photo', '写真メモ', '現場写真やメモを記録・確認')}
-      </section>
-
-      <section class="home-secondary-grid home-secondary-tool-grid" aria-label="工具・資材検索">
         ${homeSecondaryCard('tools', 'tool', '工具・資材検索', '工程に必要な道具を検索・確認')}
       </section>
 
       ${homeWorkList(listDate, works, today, tomorrow)}
     </div>
+  `;
+}
+
+function homeTodaySummary(works) {
+  const nextWork = works[0];
+  const status = nextWork ? nextWork.status || '予定' : '準備中';
+  const progressValue = nextWork && Number.isFinite(Number(nextWork.progress))
+    ? Math.max(0, Math.min(100, Number(nextWork.progress)))
+    : 0;
+  const timeLabel = nextWork
+    ? `${workStartTime(nextWork)}〜${workEndTime(nextWork)}`
+    : '本日の予定なし';
+  const nextAction = nextWork
+    ? nextWork.nextAction || nextWork.work || workCategory(nextWork)
+    : '予定を登録すると次の作業を表示します';
+  const greeting = `
+    <div class="home-summary-greeting" aria-label="今日の挨拶">
+      <strong>おはようございます！</strong>
+      <span>今日も安全第一で頑張りましょう！</span>
+    </div>
+  `;
+  const action = nextWork
+    ? `<div class="home-summary-actions">
+        <button class="home-summary-action" data-work-id="${nextWork.id}" type="button">現場を確認する${lineIcon('chevron')}</button>
+        <button class="home-summary-record" data-tab="record" type="button">${lineIcon('plus')}<span>記録する</span></button>
+      </div>`
+    : '<span class="home-summary-empty-action">本日の予定を登録すると表示されます</span>';
+
+  return `
+    <section class="home-today-summary" aria-label="今日の現場サマリー">
+      ${greeting}
+      <div class="home-summary-heading">
+        <div>
+          <span class="section-kicker">TODAY / FIELD STATUS</span>
+          <h2>今日の現場サマリー</h2>
+        </div>
+        <span class="home-summary-pulse" aria-hidden="true"></span>
+      </div>
+      <dl class="home-summary-grid">
+        <div class="home-summary-project"><dt>現場名</dt><dd>${escapeHTML(nextWork ? workProjectTitle(nextWork) : '本日の現場は未登録')}</dd><span class="home-summary-time">${escapeHTML(timeLabel)}</span></div>
+        <div><dt>次の工程</dt><dd>${escapeHTML(nextWork ? workCategory(nextWork) : '次の工程は未登録')}</dd></div>
+        <div><dt>担当者</dt><dd>${escapeHTML(nextWork?.assignee || '担当者未設定')}</dd></div>
+        <div class="home-summary-state"><dt>状態</dt><dd>${escapeHTML(status)}</dd></div>
+        <div class="home-summary-progress"><dt>進捗</dt><dd><strong>${progressValue}%</strong><span class="home-summary-progress-track" style="--progress:${progressValue}%"><i></i></span></dd></div>
+        <div class="home-summary-next"><dt>次にする作業</dt><dd>${escapeHTML(nextAction)}</dd></div>
+      </dl>
+      ${action}
+    </section>
   `;
 }
 
@@ -1443,12 +1489,20 @@ function homeFeatureCard(tone, title, body, actionAttribute) {
     yellow: 'お知らせと注意事項を確認',
     purple: '月間カレンダーから検索',
   }[tone] || body;
+  const monthPrefix = String(state.homeDate || '').slice(0, 7);
+  const featureMeta = {
+    green: `${worksForDate(state.homeDate).length}件の工事予定`,
+    blue: `${worksForDate(shiftDate(state.homeDate, 1)).length}件の工事予定`,
+    yellow: `未読 ${(state.notices || []).filter(item => !item.read).length}件`,
+    purple: `今月 ${(state.dailyWorks || []).filter(work => String(work.date || '').startsWith(monthPrefix)).length}件`,
+  }[tone] || '';
 
   return `
     <button class="home-feature-card home-feature-${tone}" ${actionAttribute} type="button">
       ${homeFeatureVisual(tone)}
       <strong>${title}</strong>
       <small>${compactBody}</small>
+      <span class="home-feature-meta">${featureMeta}</span>
       <span class="home-feature-arrow" aria-hidden="true">${lineIcon('chevron')}</span>
     </button>
   `;
@@ -1472,10 +1526,18 @@ function homeFeatureVisual(tone) {
 }
 
 function homeSecondaryCard(tab, icon, title, body) {
+  const activeProjectCount = (state.projects || []).filter(project => Number(project.overallProgress) < 100).length;
+  const statusByTab = {
+    projects: `進行中${activeProjectCount}件`,
+    photos: `確認待ち${reviewPhotos().length}件`,
+    tools: `持ち物${(state.tools || []).filter(tool => tool.packingChecked).length}件`
+  };
+  const status = statusByTab[tab] || body;
+
   return `
     <button class="home-secondary-card home-secondary-${tab}" data-tab="${tab}" type="button">
       <span aria-hidden="true">${lineIcon(icon)}</span>
-      <span><strong>${title}</strong><small>${body}</small></span>
+      <span><strong>${title}</strong><small class="home-secondary-status">${status}</small></span>
       <i aria-hidden="true">${lineIcon('chevron')}</i>
     </button>
   `;
@@ -1500,9 +1562,11 @@ function homeWorkRow(work) {
   return `
     <button class="home-work-row" data-work-id="${work.id}" type="button">
       <span class="home-work-time">${workStartTime(work)}〜${workEndTime(work)}</span>
-      <strong class="home-work-title">${escapeHTML(workProjectTitle(work))}</strong>
-      <span class="home-work-category">${escapeHTML(workCategory(work))}</span>
-      <span class="home-work-place">${escapeHTML(workFloor(work))}</span>
+      <span class="home-work-copy">
+        <strong class="home-work-title">${escapeHTML(workProjectTitle(work))}</strong>
+        <span class="home-work-meta"><span class="home-work-category">${escapeHTML(workCategory(work))}</span><span class="home-work-place">${escapeHTML(workFloor(work))} / ${escapeHTML(work.assignee || '担当者未設定')}</span></span>
+      </span>
+      <span class="home-work-status">${escapeHTML(work.status || '予定')}</span>
       <span class="home-work-arrow" aria-hidden="true">${lineIcon('chevron')}</span>
     </button>
   `;
