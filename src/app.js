@@ -1029,6 +1029,13 @@ function appHeader() {
 function lineIcon(name) {
   const paths = {
     bolt: '<path d="m13 2-8 11h6l-1 9 8-12h-6z" />',
+    dashboard: '<rect x="4" y="4" width="6" height="6" rx="1" /><rect x="14" y="4" width="6" height="6" rx="1" /><rect x="4" y="14" width="6" height="6" rx="1" /><rect x="14" y="14" width="6" height="6" rx="1" />',
+    briefcase: '<path d="M4 8h16v11H4z" /><path d="M9 8V5h6v3M3 12h18M10 12v2h4v-2" />',
+    'briefcase-plus': '<path d="M4 8h16v11H4z" /><path d="M9 8V5h6v3M3 12h18" /><path d="M12 14v4M10 16h4" />',
+    'note-pencil': '<path d="M5 3h10l4 4v14H5z" /><path d="M15 3v5h4M8 11h6M8 15h4" /><path d="m12 19 5.2-5.2 2 2-5.2 5.2-3 1z" />',
+    timeline: '<path d="M4 6h16M4 12h16M4 18h16" /><circle cx="8" cy="6" r="2" /><circle cx="15" cy="12" r="2" /><circle cx="11" cy="18" r="2" />',
+    people: '<circle cx="8.5" cy="8" r="3" /><circle cx="17" cy="9" r="2.5" /><path d="M3 20c.6-3.3 2.8-5 5.5-5s4.9 1.7 5.5 5M14 15c3.5-.3 6 1.4 6 4" />',
+    camera: '<path d="M4 8h4l2-3h4l2 3h4v11H4z" /><circle cx="12" cy="13" r="3.5" /><path d="M17 11h.01" />',
     reset: '<path d="M4 8V4h4" /><path d="M4.5 4.5A8 8 0 1 1 4 14" />',
     site: '<path d="m3 10 9-7 9 7" /><path d="M5 9v11h14V9" /><path d="M9 20v-6h6v6" />',
     memo: '<rect x="5" y="3" width="14" height="18" rx="2" /><path d="M9 3h6v3H9z" /><path d="M8 10h8M8 14h8M8 18h5" />',
@@ -2484,31 +2491,78 @@ function activeScreen() {
   return notesScreen();
 }
 
+function projectProgressValue(project) {
+  const progress = Number(project.overallProgress);
+  return Number.isFinite(progress) ? Math.min(100, Math.max(0, Math.round(progress))) : 0;
+}
+
 function projectsScreen() {
   const project = activeProject();
+  const progress = projectProgressValue(project);
+  const completedCount = state.projects.filter(item => projectProgressValue(item) >= 100).length;
+  const activeCount = state.projects.length - completedCount;
+  const averageProgress = state.projects.length
+    ? Math.round(state.projects.reduce((total, item) => total + projectProgressValue(item), 0) / state.projects.length)
+    : 0;
 
   return `
-    <div class="screen-header">
+    <div class="screen-header project-screen-header">
       <div>
-        <p class="eyebrow">Project manager</p>
-        <h2>案件作成・編集</h2>
+        <p class="eyebrow">Project workspace</p>
+        <h2>案件管理</h2>
       </div>
-      <div class="progress-ring" aria-label="案件数 ${state.projects.length}件">${state.projects.length}</div>
+      <button class="project-open-form-button" data-action="open-project-create" type="button">
+        ${lineIcon('briefcase-plus')}
+        <span>案件フォーム</span>
+      </button>
     </div>
-    <p class="lead">新人電気工事士さんが、現場案件を新しく作成し、後から内容を編集できる画面モックです。本番データベース保存はまだ行いません。</p>
-    <aside class="notice">
-      案件作成・編集は、このブラウザ上の画面状態だけに反映します。本番ログイン、本番データベース、クラウド保存、決済はまだ入れていません。
+    <p class="lead project-screen-lead">担当案件の現在地を確認し、工程・担当・記録へ迷わず進むための画面です。</p>
+    <section class="project-workspace-hero" aria-label="選択中の案件 ${escapeHTML(project.title)}">
+      <div class="project-hero-heading">
+        <span class="project-hero-icon" aria-hidden="true">${lineIcon('briefcase')}</span>
+        <div>
+          <p class="eyebrow">選択中の案件</p>
+          <h3>${escapeHTML(project.title)}</h3>
+          <div class="project-hero-tags">
+            <span class="status-badge status-${statusClass(project.status)}">${escapeHTML(project.status)}</span>
+            <span>${escapeHTML(project.type)}</span>
+          </div>
+        </div>
+      </div>
+      <div class="project-hero-progress" role="progressbar" aria-label="${escapeHTML(project.title)}の進捗率 ${progress}%" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress}" style="--project-progress: ${progress}%">
+        <strong>${progress}%</strong>
+        <span>進捗</span>
+      </div>
+      <dl class="project-hero-facts">
+        <div><dt>次の工程</dt><dd>${escapeHTML(project.nextProcess || nextScheduleItem().name)}</dd></div>
+        <div><dt>担当</dt><dd>${escapeHTML(project.assignee || '未設定')}</dd></div>
+        <div><dt>期間</dt><dd>${escapeHTML(projectScheduleLabel(project))}</dd></div>
+      </dl>
+      <div class="project-hero-actions" aria-label="選択中の案件の操作">
+        <button data-action="focus-project-form" type="button">${lineIcon('note-pencil')}<span>案件を編集</span></button>
+        <button data-tab="schedule" type="button">${lineIcon('timeline')}<span>工程を確認</span></button>
+      </div>
+    </section>
+    <section class="project-portfolio-stats" aria-label="案件全体の概要">
+      <article><span aria-hidden="true">${lineIcon('briefcase')}</span><small>全案件</small><strong>${state.projects.length}件</strong></article>
+      <article><span aria-hidden="true">${lineIcon('timeline')}</span><small>進行中</small><strong>${activeCount}件</strong></article>
+      <article><span aria-hidden="true">${lineIcon('dashboard')}</span><small>平均進捗</small><strong>${averageProgress}%</strong></article>
+    </section>
+    <aside class="notice project-storage-notice">
+      案件の追加・更新内容は、このブラウザの保存領域に反映されます。本番ログイン・クラウド共有・権限管理は未実装です。
     </aside>
     <div class="project-manager-layout">
       <section class="project-list" aria-label="案件一覧">
         <div class="section-title">
           <div>
             <p class="eyebrow">Projects</p>
-            <h3>案件一覧</h3>
+            <h3>案件を選ぶ</h3>
           </div>
           <span>${state.projects.length}件</span>
         </div>
-        ${state.projects.map(item => projectCard(item)).join('')}
+        <div class="project-list-items">
+          ${state.projects.map(item => projectCard(item)).join('')}
+        </div>
       </section>
       ${projectDetail(project)}
       ${projectForm(project)}
@@ -2517,59 +2571,75 @@ function projectsScreen() {
 }
 
 function projectCard(project) {
+  const progress = projectProgressValue(project);
+  const isSelected = project.id === state.activeProjectId;
+
   return `
-    <button class="project-card ${project.id === state.activeProjectId ? 'is-selected' : ''}" data-project-id="${project.id}" type="button">
-      <div>
-        <span>${project.type}</span>
-        <strong>${project.title}</strong>
-        <small>${project.address || project.location}</small>
-      </div>
-      <div class="project-card-meta">
-        <span>担当者：${project.assignee}</span>
-        <span>進捗 ${project.overallProgress}%</span>
-        <span>${project.status}</span>
-      </div>
-      <p>次の工程：${project.nextProcess || nextScheduleItem().name}</p>
+    <button class="project-card ${isSelected ? 'is-selected' : ''}" data-project-id="${project.id}" type="button" aria-pressed="${isSelected}">
+      <span class="project-card-icon" aria-hidden="true">${lineIcon('briefcase')}</span>
+      <span class="project-card-copy">
+        <span class="project-card-heading">
+          <span>${escapeHTML(project.type)}</span>
+          <span class="project-card-status status-${statusClass(project.status)}">${escapeHTML(project.status)}</span>
+        </span>
+        <strong>${escapeHTML(project.title)}</strong>
+        <small>${escapeHTML(project.address || project.location || '現場情報未設定')}</small>
+        <span class="project-card-next"><b>次の工程</b>${escapeHTML(project.nextProcess || nextScheduleItem().name)}</span>
+        <span class="project-card-progress-row"><span>担当 ${escapeHTML(project.assignee || '未設定')}</span><b>${progress}%</b></span>
+        <span class="project-card-progress" role="progressbar" aria-label="進捗率 ${progress}%" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress}"><i style="width: ${progress}%"></i></span>
+      </span>
+      <span class="project-card-chevron" aria-hidden="true">${lineIcon('chevron')}</span>
     </button>
   `;
 }
 
 function projectDetail(project) {
+  const progress = projectProgressValue(project);
+
   return `
     <section class="project-detail" id="project-detail" aria-label="${project.title}の詳細">
-      <div class="screen-header">
-        <div>
+      <div class="screen-header project-detail-header">
+        <span class="project-detail-icon" aria-hidden="true">${lineIcon('site')}</span>
+        <div class="project-detail-heading-copy">
           <p class="eyebrow">Selected project</p>
-          <h2>${project.title}</h2>
+          <h2>${escapeHTML(project.title)}</h2>
         </div>
-        <span class="status-badge status-${statusClass(project.status)}">${project.status}</span>
+        <span class="status-badge status-${statusClass(project.status)}">${escapeHTML(project.status)}</span>
       </div>
+      <section class="project-next-action" aria-label="次にすること">
+        <span aria-hidden="true">${lineIcon('bolt')}</span>
+        <div>
+          <small>現場で次にすること</small>
+          <strong>${escapeHTML(project.nextProcess || nextScheduleItem().name)}</strong>
+          <p>${escapeHTML(project.supervisorQuestion || '次の工程の確認事項を上司と共有する。')}</p>
+        </div>
+      </section>
       <div class="selected-detail-summary">
         <article>
           <span>案件名</span>
-          <strong>${project.title}</strong>
+          <strong>${escapeHTML(project.title)}</strong>
         </article>
         <article>
           <span>工事種別</span>
-          <strong>${project.type}</strong>
+          <strong>${escapeHTML(project.type)}</strong>
         </article>
         <article>
           <span>担当者</span>
-          <strong>${project.assignee}</strong>
+          <strong>${escapeHTML(project.assignee)}</strong>
         </article>
         <article>
           <span>確認者</span>
-          <strong>${project.reviewer}</strong>
+          <strong>${escapeHTML(project.reviewer)}</strong>
         </article>
         <article>
           <span>工程</span>
-          <strong>${project.nextProcess || nextScheduleItem().name}</strong>
+          <strong>${escapeHTML(project.nextProcess || nextScheduleItem().name)}</strong>
         </article>
         <article class="detail-progress-card">
           <span>進捗率</span>
-          <strong>${project.overallProgress}%</strong>
-          <div class="detail-progress-bar" aria-label="案件の進捗率 ${project.overallProgress}%">
-            <span style="width: ${project.overallProgress}%"></span>
+          <strong>${progress}%</strong>
+          <div class="detail-progress-bar" role="progressbar" aria-label="案件の進捗率 ${progress}%" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress}">
+            <span style="width: ${progress}%"></span>
           </div>
         </article>
         <article>
@@ -2611,12 +2681,12 @@ function projectDetail(project) {
           <p>${project.supervisorQuestion || '上司確認事項は未入力です。'}</p>
         </article>
       </div>
-      <div class="detail-actions">
-        <button class="detail-edit-button" data-action="focus-project-form" type="button">編集する</button>
-        <button data-tab="schedule" type="button">工程表</button>
-        <button data-tab="assignments" type="button">担当者別工事</button>
-        <button data-tab="photos" type="button">写真メモ</button>
-        <button data-tab="cases" type="button">過去事例</button>
+      <div class="detail-actions project-action-grid" aria-label="案件から移動">
+        <button class="detail-edit-button" data-action="focus-project-form" type="button">${lineIcon('note-pencil')}<span>編集する</span></button>
+        <button data-tab="schedule" type="button">${lineIcon('timeline')}<span>工程表</span></button>
+        <button data-tab="assignments" type="button">${lineIcon('people')}<span>担当者別</span></button>
+        <button data-tab="photos" type="button">${lineIcon('camera')}<span>写真メモ</span></button>
+        <button data-tab="cases" type="button">${lineIcon('case')}<span>過去事例</span></button>
       </div>
     </section>
   `;
