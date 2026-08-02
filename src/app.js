@@ -1790,6 +1790,61 @@ function noticesScreen() {
   `;
 }
 
+function openNoticeDestination(notice) {
+  const noticeDate = /^\d{4}\/\d{2}\/\d{2}$/.test(notice.date) ? notice.date : state.homeDate;
+
+  if (notice.type === '安全') {
+    state.activeTab = 'before';
+    render();
+    return;
+  }
+
+  if (notice.type === '工程変更') {
+    const firstWork = worksForDate(noticeDate)[0];
+    const firstSchedule = schedulesForDate(noticeDate)[0];
+    state.calendarMode = 'all';
+    state.calendarSearch = '';
+    state.calendarMonth = noticeDate.slice(0, 7);
+    state.selectedWorkDate = noticeDate;
+    if (firstWork) {
+      state.activeWorkId = firstWork.id;
+      state.activeAssignee = firstWork.assignee;
+      state.activeScheduleId = firstWork.scheduleId;
+    } else if (firstSchedule) {
+      state.activeScheduleId = firstSchedule.id;
+    }
+    state.activeTab = 'calendar';
+    render();
+    scrollToCalendarDayDetail();
+    return;
+  }
+
+  if (notice.type === '写真メモ') {
+    const photo = reviewPhotos()[0] || state.photos[0];
+    if (photo) {
+      state.activeScheduleId = photo.scheduleId;
+      state.selectedWorkDate = formatDate(photo.date);
+    }
+    state.activeTab = 'photos';
+    render();
+    if (photo) {
+      scrollToPhotoCard(photo.id);
+    } else {
+      scrollToPhotoList();
+    }
+    return;
+  }
+
+  if (notice.type === 'コメント') {
+    state.activeTab = 'notes';
+    render();
+    scrollToNoteList();
+    return;
+  }
+
+  render();
+}
+
 function recordMenuScreen() {
   return `
     <div class="record-menu-screen">
@@ -4192,8 +4247,10 @@ document.addEventListener('click', (event) => {
   const noticeTarget = event.target.closest('[data-notice-id]');
   if (noticeTarget) {
     const notice = state.notices.find(item => item.id === noticeTarget.dataset.noticeId);
-    if (notice) notice.read = true;
-    render();
+    if (notice) {
+      notice.read = true;
+      openNoticeDestination(notice);
+    }
     return;
   }
 
@@ -4543,6 +4600,15 @@ function scrollToPhotoCard(photoId) {
 function scrollToPhotoList() {
   requestAnimationFrame(() => {
     document.querySelector('.photo-section')?.scrollIntoView({
+      behavior: getScrollBehavior(),
+      block: 'start'
+    });
+  });
+}
+
+function scrollToNoteList() {
+  requestAnimationFrame(() => {
+    document.querySelector('.note-list')?.scrollIntoView({
       behavior: getScrollBehavior(),
       block: 'start'
     });

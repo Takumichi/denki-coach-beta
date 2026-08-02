@@ -10109,32 +10109,6 @@ body:has(.screen-home) main {
   border-radius: 0;
 }
 
-.screen-home .home-work-row::before {
-  position: absolute;
-  z-index: 1;
-  top: 24px;
-  left: calc(var(--home-time-column) + 2px);
-  width: 8px;
-  height: 8px;
-  background: var(--neo-brand);
-  border: 3px solid #ffffff;
-  border-radius: 50%;
-  box-shadow: 0 0 0 2px #bfe1d2;
-  content: "";
-}
-
-.screen-home .home-work-row:not(:last-child)::after {
-  position: absolute;
-  z-index: 0;
-  top: 32px;
-  bottom: -24px;
-  left: calc(var(--home-time-column) + 5px);
-  width: 2px;
-  background: linear-gradient(180deg, #9bd6bf, #d6e9e1);
-  content: "";
-  pointer-events: none;
-}
-
 .screen-home .home-work-time {
   color: var(--neo-brand-deep);
   font-size: 18px;
