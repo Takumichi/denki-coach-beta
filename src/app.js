@@ -756,22 +756,22 @@ let hasRendered = false;
 let pendingSaveMessage = '';
 
 const tabs = [
-  { id: 'home', label: 'ホーム', icon: 'home' },
-  { id: 'calendar', label: '工程表検索', icon: 'calendar' },
-  { id: 'record', label: '記録する', icon: 'plus' },
-  { id: 'notices', label: '連絡事項', icon: 'bell' },
-  { id: 'menu', label: 'メニュー', icon: 'menu' },
-  { id: 'projects', label: '案件', icon: 'site' },
-  { id: 'notes', label: '予習ノート', icon: 'memo' },
-  { id: 'before', label: '仕事前', icon: 'prep' },
-  { id: 'schedule', label: '工程表', icon: 'flow' },
-  { id: 'assignments', label: '担当別', icon: 'team' },
-  { id: 'cases', label: '過去事例', icon: 'case' },
-  { id: 'photos', label: '写真メモ', icon: 'photo' },
-  { id: 'tools', label: '工具・資材検索', icon: 'tool' },
-  { id: 'people', label: '担当者', icon: 'user' },
-  { id: 'after', label: '自宅整理', icon: 'home' },
-  { id: 'beta', label: 'βテスト', icon: 'beta' }
+  { id: 'home', label: 'ホーム', icon: 'dashboard' },
+  { id: 'calendar', label: '工程表検索', icon: 'schedule' },
+  { id: 'record', label: '記録する', icon: 'record' },
+  { id: 'notices', label: '連絡事項', icon: 'alert' },
+  { id: 'menu', label: 'メニュー', icon: 'grid' },
+  { id: 'projects', label: '案件', icon: 'briefcase' },
+  { id: 'notes', label: '予習ノート', icon: 'note-pencil' },
+  { id: 'before', label: '仕事前', icon: 'shield-check' },
+  { id: 'schedule', label: '工程表', icon: 'timeline' },
+  { id: 'assignments', label: '担当別', icon: 'people' },
+  { id: 'cases', label: '過去事例', icon: 'search-stack' },
+  { id: 'photos', label: '写真メモ', icon: 'camera' },
+  { id: 'tools', label: '工具・資材検索', icon: 'wrench' },
+  { id: 'people', label: '担当者', icon: 'people' },
+  { id: 'after', label: '自宅整理', icon: 'home-check' },
+  { id: 'beta', label: 'βテスト', icon: 'flask' }
 ];
 
 const primaryTabIds = ['home', 'calendar', 'record', 'notices', 'menu'];
@@ -797,11 +797,11 @@ const tabInfo = {
 };
 
 const navigationCategories = [
-  { id: 'field', label: '現場確認', description: '工程・担当・進捗をまとめて確認', icon: 'flow', tabIds: ['schedule', 'assignments', 'people'] },
-  { id: 'record', label: '記録・共有', description: '写真・メモ・連絡を残して伝える', icon: 'memo', tabIds: ['notes', 'photos'] },
-  { id: 'reference', label: '検索・管理', description: '案件・工具・過去事例を必要な時に探す', icon: 'case', tabIds: ['projects', 'tools', 'cases'] },
-  { id: 'prepare', label: '準備・振り返り', description: '仕事前後の確認事項を整理する', icon: 'prep', tabIds: ['before', 'after'] },
-  { id: 'labs', label: '検証', description: '新しい機能を試す', icon: 'beta', tabIds: ['beta'] }
+  { id: 'field', label: '現場確認', description: '工程・担当・進捗をまとめて確認', icon: 'schedule', tabIds: ['schedule', 'assignments', 'people'] },
+  { id: 'record', label: '記録・共有', description: '写真・メモ・連絡を残して伝える', icon: 'record', tabIds: ['notes', 'photos'] },
+  { id: 'reference', label: '検索・管理', description: '案件・工具・過去事例を必要な時に探す', icon: 'search-stack', tabIds: ['projects', 'tools', 'cases'] },
+  { id: 'prepare', label: '準備・振り返り', description: '仕事前後の確認事項を整理する', icon: 'clipboard-check', tabIds: ['before', 'after'] },
+  { id: 'labs', label: '検証', description: '新しい機能を試す', icon: 'flask', tabIds: ['beta'] }
 ];
 
 function tabCategoryLabel(tabId) {
@@ -1009,17 +1009,20 @@ function render() {
 
 function appHeader() {
   if (state.activeTab === 'calendar') return '';
-  const unread = state.notices.filter(item => !item.read).length;
+  const unread = (state.notices || []).filter(item => !item.read).length;
 
   return `
     <header class="topbar app-header">
-      <button class="header-icon-button" data-tab="menu" type="button" aria-label="メニューを開く">${lineIcon('menu')}</button>
+      <button class="header-icon-button" data-tab="menu" type="button" aria-label="メニューを開く">${lineIcon('grid')}</button>
       <button class="header-brand" data-tab="home" type="button" aria-label="ホームへ戻る">
         <span class="helmet-mark" aria-hidden="true"><i></i>${lineIcon('bolt')}</span>
-        <strong>現場でんき探偵</strong>
+        <span class="header-brand-copy">
+          <small>NEO FIELD TECH 3.0</small>
+          <strong>現場でんき探偵 <em>Pro</em></strong>
+        </span>
       </button>
       <button class="header-icon-button header-notice-button" data-tab="notices" type="button" aria-label="連絡事項 ${unread}件未読">
-        ${lineIcon('bell')}
+        ${lineIcon('alert')}
         ${unread ? '<span class="unread-dot" aria-hidden="true"></span>' : ''}
       </button>
     </header>
@@ -1030,12 +1033,25 @@ function lineIcon(name) {
   const paths = {
     bolt: '<path d="m13 2-8 11h6l-1 9 8-12h-6z" />',
     dashboard: '<rect x="4" y="4" width="6" height="6" rx="1" /><rect x="14" y="4" width="6" height="6" rx="1" /><rect x="4" y="14" width="6" height="6" rx="1" /><rect x="14" y="14" width="6" height="6" rx="1" />',
+    schedule: '<rect x="3" y="5" width="18" height="16" rx="2" /><path d="M8 3v4M16 3v4M3 10h18" /><circle cx="16.5" cy="16.5" r="3.5" /><path d="M16.5 14.8v1.9l1.3.8" />',
+    record: '<rect x="5" y="3" width="14" height="18" rx="2" /><path d="M9 8h6M9 12h4" /><path d="m12.5 17.5 5.2-5.2 2 2-5.2 5.2-3 1z" />',
+    alert: '<path d="m12 3 9 17H3z" /><path d="M12 9v5M12 17v.01" />',
+    grid: '<rect x="4" y="4" width="6" height="6" rx="1" /><rect x="14" y="4" width="6" height="6" rx="1" /><rect x="4" y="14" width="6" height="6" rx="1" /><rect x="14" y="14" width="6" height="6" rx="1" /><path d="M10 7h4M7 10v4M17 10v4M10 17h4" />',
     briefcase: '<path d="M4 8h16v11H4z" /><path d="M9 8V5h6v3M3 12h18M10 12v2h4v-2" />',
     'briefcase-plus': '<path d="M4 8h16v11H4z" /><path d="M9 8V5h6v3M3 12h18" /><path d="M12 14v4M10 16h4" />',
     'note-pencil': '<path d="M5 3h10l4 4v14H5z" /><path d="M15 3v5h4M8 11h6M8 15h4" /><path d="m12 19 5.2-5.2 2 2-5.2 5.2-3 1z" />',
+    'shield-check': '<path d="M12 3 5 6v5c0 4.8 2.9 8.1 7 10 4.1-1.9 7-5.2 7-10V6z" /><path d="m9 12 2 2 4-4" />',
     timeline: '<path d="M4 6h16M4 12h16M4 18h16" /><circle cx="8" cy="6" r="2" /><circle cx="15" cy="12" r="2" /><circle cx="11" cy="18" r="2" />',
     people: '<circle cx="8.5" cy="8" r="3" /><circle cx="17" cy="9" r="2.5" /><path d="M3 20c.6-3.3 2.8-5 5.5-5s4.9 1.7 5.5 5M14 15c3.5-.3 6 1.4 6 4" />',
+    'search-stack': '<rect x="4" y="4" width="12" height="12" rx="2" /><path d="M7 8h6M7 11h4" /><circle cx="15.5" cy="15.5" r="4.5" /><path d="m19 19 2 2" />',
     camera: '<path d="M4 8h4l2-3h4l2 3h4v11H4z" /><circle cx="12" cy="13" r="3.5" /><path d="M17 11h.01" />',
+    wrench: '<path d="M14.5 5.5a4.5 4.5 0 0 0 4.9 5.9l-8.2 8.2a2.2 2.2 0 0 1-3.1-3.1l8.2-8.2a4.5 4.5 0 0 0-1.8-2.8Z" /><path d="m5 19-2 2M7 17l-2 2" />',
+    'home-check': '<path d="m3 10 9-7 9 7" /><path d="M5 9v11h14V9M9 20v-6h6v6" /><path d="m8 13 2 2 4-4" />',
+    flask: '<path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4A2 2 0 0 0 19 18l-5-9V3" /><path d="M7 15h10" />',
+    'clipboard-check': '<rect x="5" y="4" width="14" height="17" rx="2" /><path d="M9 4V2h6v2M8 10h4M8 14h3M14 14l1.5 1.5L18 13" />',
+    'calendar-arrow': '<rect x="3" y="5" width="18" height="16" rx="2" /><path d="M8 3v4M16 3v4M3 10h18M8 16h8M13 13l3 3-3 3" />',
+    'message-alert': '<path d="M4 5h16v11H9l-5 4z" /><path d="M12 8v4M12 14v.01" /><path d="M17 3v4M15 5h4" />',
+    'route-search': '<path d="M5 4h.01M19 20h.01M5 4c6 0 3 8 9 8s3 8 5 8" /><circle cx="12" cy="7" r="3.5" /><path d="m14.5 9.5 2 2" />',
     reset: '<path d="M4 8V4h4" /><path d="M4.5 4.5A8 8 0 1 1 4 14" />',
     site: '<path d="m3 10 9-7 9 7" /><path d="M5 9v11h14V9" /><path d="M9 20v-6h6v6" />',
     memo: '<rect x="5" y="3" width="14" height="18" rx="2" /><path d="M9 3h6v3H9z" /><path d="M8 10h8M8 14h8M8 18h5" />',
@@ -1489,9 +1505,10 @@ function homeDashboardScreen() {
       </section>
 
       <section class="home-secondary-grid home-quick-access" aria-label="クイックアクセス">
-        ${homeSecondaryCard('projects', 'site', '案件', '担当現場の情報や図面を確認')}
-        ${homeSecondaryCard('photos', 'photo', '写真メモ', '現場写真やメモを記録・確認')}
-        ${homeSecondaryCard('tools', 'tool', '工具・資材検索', '工程に必要な道具を検索・確認')}
+        ${homeSecondaryCard('projects', 'briefcase', '案件', '担当現場の情報や図面を確認')}
+        ${homeSecondaryCard('photos', 'camera', '写真メモ', '現場写真やメモを記録・確認')}
+        ${homeSecondaryCard('tools', 'wrench', '工具・資材検索', '工程に必要な道具を検索・確認')}
+        ${homeSecondaryCard('people', 'people', '担当者', '関係者の連絡先と役割を確認')}
       </section>
 
       ${homeWorkList(listDate, works, today, tomorrow)}
@@ -1520,7 +1537,7 @@ function homeTodaySummary(works) {
   const action = nextWork
     ? `<div class="home-summary-actions">
         <button class="home-summary-action" data-work-id="${nextWork.id}" type="button">現場を確認する${lineIcon('chevron')}</button>
-        <button class="home-summary-record" data-tab="record" type="button">${lineIcon('plus')}<span>記録する</span></button>
+        <button class="home-summary-record" data-tab="record" type="button">${lineIcon('record')}<span>記録する</span></button>
       </div>`
     : '<span class="home-summary-empty-action">本日の予定を登録すると表示されます</span>';
 
@@ -1577,17 +1594,17 @@ function homeFeatureVisual(tone) {
   if (tone === 'green' || tone === 'blue') {
     return `
       <span class="home-feature-visual feature-calendar-visual" aria-hidden="true">
-        ${lineIcon('calendar')}
+        ${lineIcon(tone === 'green' ? 'clipboard-check' : 'calendar-arrow')}
         <i class="feature-${tone === 'green' ? 'sun' : 'moon'}"></i>
       </span>
     `;
   }
 
   if (tone === 'purple') {
-    return `<span class="home-feature-visual feature-search-visual" aria-hidden="true">${lineIcon('calendar')}<i>${lineIcon('search')}</i></span>`;
+    return `<span class="home-feature-visual feature-search-visual" aria-hidden="true">${lineIcon('route-search')}<i>${lineIcon('search')}</i></span>`;
   }
 
-  return `<span class="home-feature-visual feature-megaphone-visual" aria-hidden="true">${lineIcon('megaphone')}</span>`;
+  return `<span class="home-feature-visual feature-megaphone-visual" aria-hidden="true">${lineIcon('message-alert')}</span>`;
 }
 
 function homeSecondaryCard(tab, icon, title, body) {
@@ -1595,7 +1612,8 @@ function homeSecondaryCard(tab, icon, title, body) {
   const statusByTab = {
     projects: `進行中${activeProjectCount}件`,
     photos: `確認待ち${reviewPhotos().length}件`,
-    tools: `持ち物${(state.tools || []).filter(tool => tool.packingChecked).length}件`
+    tools: `持ち物${(state.tools || []).filter(tool => tool.packingChecked).length}件`,
+    people: `登録${(state.people || []).length}名`
   };
   const status = statusByTab[tab] || body;
   const category = tabCategoryLabel(tab);
