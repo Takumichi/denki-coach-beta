@@ -1630,7 +1630,7 @@ function homeSecondaryCard(tab, icon, title, body) {
 function homeWorkList(date, works, today, tomorrow) {
   const label = date === today ? '本日の予定' : date === tomorrow ? '明日の予定' : `${longDateLabel(date)}の予定`;
   return `
-    <section class="home-work-section" aria-label="${label}">
+    <section class="home-work-section" id="home-work-list" aria-label="${label}">
       <div class="home-section-heading">
         <div><span class="section-accent"></span><h3>${label}</h3></div>
         <span>${works.length}件の工事予定</span>
@@ -4116,6 +4116,7 @@ document.addEventListener('click', (event) => {
       state.activeScheduleId = firstWork.scheduleId;
     }
     render();
+    scrollToHomeWorkList();
     return;
   }
 
@@ -4475,6 +4476,15 @@ document.addEventListener('keydown', (event) => {
     render();
   }
 });
+
+function scrollToHomeWorkList() {
+  requestAnimationFrame(() => {
+    document.querySelector('#home-work-list')?.scrollIntoView({
+      behavior: getScrollBehavior(),
+      block: 'start'
+    });
+  });
+}
 
 function scrollToScheduleDetail() {
   requestAnimationFrame(() => {
