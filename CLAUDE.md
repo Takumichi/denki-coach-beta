@@ -25,6 +25,27 @@
 - No direct main push without review
 - Create draft PRs for tracking
 
+## Pricing & Plan Source of Truth
+
+The current approved pricing/plan specification is:
+
+- `docs/PRICING_AND_PLAN_SPEC.md` — **2026-08-08 meeting decision / current source of truth**
+
+Current plan summary:
+
+- **Founder:** ¥980/month — first 100 users, maximum 12 months
+- **SOLO Pro:** ¥1,980/month — individual full feature set, AI support up to 30 uses/month
+- **TEAM:** ¥4,980/month — up to 5 users, assignee management, team sharing, update history
+- **BUSINESS:** ¥9,800+/month — permissions, audit logs, exports, company templates, business controls
+- **Trial:** 14 days
+- **Permanent free plan:** none
+- **Safety-critical features:** available across all plans
+- **Pricing screen:** SOLO Pro highlighted as recommended; target 1–2 minutes to field-use readiness
+
+The late-July provisional pricing hypothesis such as `500円 / 980円 / 法人1,980円〜` is **superseded** and must not be used for new implementation or financial assumptions.
+
+**Payment provider is not finalized.** Square may be evaluated, but implementation must remain provider-agnostic until a later explicit decision.
+
 ## Skills & Resources
 
 ### Installed Skills
@@ -36,7 +57,8 @@
 
 ### Project Resources
 - `.claude/RESOURCES/Claude_Code_Skills_verification_report.md` — Skills audit
-- `docs/denki-pro-financial-model.xlsx` — Financial planning
+- `docs/PRICING_AND_PLAN_SPEC.md` — Current pricing and plan source of truth
+- `docs/denki-pro-financial-model.xlsx` — Financial planning; must be reconciled with the 2026-08-08 pricing specification before merge
 
 ## Google Drive Integration
 
@@ -55,12 +77,14 @@ f27ae02 Integrate thought-partner-council skill and project resources
 
 ## Next Steps
 
+- [ ] Reconcile `docs/denki-pro-financial-model.xlsx` with `docs/PRICING_AND_PLAN_SPEC.md`
 - [ ] Review & test thought-partner-council skill
-- [ ] Verify financial model integration
-- [ ] Merge PR #1 to main
-- [ ] Update project documentation
+- [ ] Confirm payment provider separately after internal review; do not assume Square is final
+- [ ] Run beta functional QA
+- [ ] Merge PR #1 to main only after the above checks pass
+- [ ] Update project documentation as needed
 
 ---
 
-**Last Updated**: 2026-08-09
+**Last Updated**: 2026-08-12
 **Branch**: claude/denki-tantei-pro-status-ciombn
