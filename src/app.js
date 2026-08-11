@@ -754,6 +754,9 @@ let saveStatus = {
 };
 let hasRendered = false;
 let pendingSaveMessage = '';
+let navigationHistory = [];
+let previousScreenState = null;
+let previousActiveTab = 'home';
 
 const tabs = [
   { id: 'home', label: 'ホーム', icon: 'dashboard' },
@@ -987,10 +990,44 @@ function fileToDataURL(file) {
   });
 }
 
+function recordNavigation(fromTab) {
+  const snapshot = cloneState(state);
+  navigationHistory.push({ tab: fromTab, state: snapshot });
+  if (navigationHistory.length > 20) {
+    navigationHistory.shift();
+  }
+}
+
+function backButton() {
+  return `<button class="back-button" data-action="back" aria-label="戻る" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; border: 1px solid #ddd; border-radius: 0.375rem; background: transparent; cursor: pointer; font-size: 0.875rem; min-height: 44px; touch-action: manipulation;">
+    <span style="font-size: 1.25rem;">←</span>
+    <span>戻る</span>
+  </button>`;
+}
+
+function restorePreviousScreen() {
+  if (navigationHistory.length === 0) return false;
+  const previous = navigationHistory.pop();
+  if (!previous) return false;
+  state = previous.state;
+  return true;
+}
+
 function render() {
   persistState(hasRendered ? pendingSaveMessage || '自動保存しました' : '保存済み');
   pendingSaveMessage = '';
   hasRendered = true;
+
+  const detailTabs = ['schedule', 'assignments', 'cases', 'photos', 'projects', 'people'];
+  if (detailTabs.includes(state.activeTab) && state.activeTab !== previousActiveTab) {
+    const prevState = cloneState(state);
+    prevState.activeTab = previousActiveTab;
+    navigationHistory.push({ tab: previousActiveTab, state: prevState });
+    if (navigationHistory.length > 20) {
+      navigationHistory.shift();
+    }
+  }
+  previousActiveTab = state.activeTab;
 
   const app = document.querySelector('#app');
   app.innerHTML = `
@@ -2579,6 +2616,7 @@ function projectsScreen() {
     : 0;
 
   return `
+    <div style="padding-bottom: 1rem;">${backButton()}</div>
     <div class="screen-header project-screen-header">
       <div>
         <p class="eyebrow">Project workspace</p>
@@ -2854,6 +2892,7 @@ function peopleMasterScreen() {
   const person = activePerson();
 
   return `
+    <div style="padding-bottom: 1rem;">${backButton()}</div>
     <div class="screen-header">
       <div>
         <p class="eyebrow">People master</p>
@@ -2921,6 +2960,7 @@ function photoMemoScreen() {
   const needsReview = reviewPhotos();
 
   return `
+    <div style="padding-bottom: 1rem;">${backButton()}</div>
     <div class="screen-header">
       <div>
         <p class="eyebrow">Photo memo</p>
@@ -3007,6 +3047,7 @@ function scheduleScreen() {
   const active = activeScheduleItem();
 
   return `
+    <div style="padding-bottom: 1rem;">${backButton()}</div>
     <div class="screen-header">
       <div>
         <p class="eyebrow">Schedule</p>
@@ -3055,6 +3096,7 @@ function assignmentsScreen() {
   const activeWork = activeDailyWork();
 
   return `
+    <div style="padding-bottom: 1rem;">${backButton()}</div>
     <div class="screen-header">
       <div>
         <p class="eyebrow">Daily assignments</p>
@@ -3224,6 +3266,7 @@ function pastCasesScreen() {
   const active = activePastCase(results);
 
   return `
+    <div style="padding-bottom: 1rem;">${backButton()}</div>
     <div class="screen-header">
       <div>
         <p class="eyebrow">Case search</p>
@@ -4117,6 +4160,14 @@ document.addEventListener('change', async (event) => {
 });
 
 document.addEventListener('click', (event) => {
+  const backTarget = event.target.closest('[data-action="back"]');
+  if (backTarget) {
+    if (restorePreviousScreen()) {
+      render();
+    }
+    return;
+  }
+
   const resetSampleTarget = event.target.closest('[data-action="reset-sample"]');
   if (resetSampleTarget) {
     resetToSampleState();
@@ -4634,3 +4685,10 @@ function scrollToToolCard(toolId) {
 }
 
 render();
+
+window.addEventListener('popstate', () => {
+  if (navigationHistory.length > 0) {
+    restorePreviousScreen();
+    render();
+  }
+});
