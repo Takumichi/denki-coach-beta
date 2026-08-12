@@ -8,6 +8,17 @@
 - **主要ファイル**: `src/app.js` (197KB), `src/styles.css` (266KB)
 - **対象ユーザー**: 電気工事現場の作業者・確認者・主任
 
+## First Read / Handoff
+
+Claude Codeは作業開始時、判断や変更を行う前に次を確認する。
+
+1. `CLAUDE.md`（この文書）
+2. `docs/DEVELOPMENT_HANDOFF_2026-08-12.md` — **PR #1で何が起き、なぜ停止し、何を直し、どの条件でmainへマージしたかの原因解決・判断経緯**
+3. `docs/PRICING_AND_PLAN_SPEC.md` — 現在の料金・プラン正本
+4. 必要な場合のみ `docs/denki-pro-financial-model.xlsx` — 現在は既知のレビュー指摘が残る未検証資料
+
+重要なGit/GitHub操作を説明するときは、英語用語だけでなく日本語で操作結果を説明する。特に merge / commit / push / pull / branch / PR / deploy は平易な日本語を添える。
+
 ## Key Features
 
 - 📋 **案件管理**: 複数プロジェクト（A邸、Bマンション、C店舗等）
@@ -57,6 +68,7 @@ The late-July provisional pricing hypothesis such as `500円 / 980円 / 法人1,
 
 ### Project Resources
 - `.claude/RESOURCES/Claude_Code_Skills_verification_report.md` — Skills audit
+- `docs/DEVELOPMENT_HANDOFF_2026-08-12.md` — PR #1原因解決・判断経緯・再発防止ルール
 - `docs/PRICING_AND_PLAN_SPEC.md` — Current pricing and plan source of truth
 - `docs/denki-pro-financial-model.xlsx` — Financial planning workbook. **Known review findings remain; do not use it as an authoritative decision source until corrected and revalidated.**
 
