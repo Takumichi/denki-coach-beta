@@ -1,0 +1,18 @@
+{
+  "language": "japanese",
+  "permissions": {
+    "allow": [
+      "Bash(cp /root/.claude/uploads/8d37a327-5084-5c29-af77-957dc566f653/8a919164-Claude_Code_Skills_______________________.md /home/user/denki-coach-beta/.claude/RESOURCES/Claude_Code_Skills_verification_report.md)",
+      "Bash(cp /root/.claude/uploads/8d37a327-5084-5c29-af77-957dc566f653/1070272b-_______Pro______.xlsx /home/user/denki-coach-beta/docs/denki-pro-financial-model.xlsx)",
+      "Bash(touch /home/user/denki-coach-beta/CLAUDE.md)",
+      "Bash(mkdir -p /home/user/denki-coach-beta/.claude/RESOURCES)",
+      "Bash(mkdir -p /home/user/denki-coach-beta/docs)"
+    ],
+    "dontAsk": [
+      "Read",
+      "Grep",
+      "Glob",
+      "WebFetch"
+    ]
+  }
+}
