@@ -5159,6 +5159,44 @@ main {
 }
 
 .calendar-screen-header h2 { color: #17211f; font-size: 23px; text-align: center; }
+.common-back-navigation {
+  display: flex;
+  min-width: 0;
+}
+
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 8px 13px;
+  background: transparent;
+  color: var(--dash-green);
+  border: 1px solid currentColor;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 900;
+  line-height: 1;
+  touch-action: manipulation;
+}
+
+.back-button-icon {
+  font-size: 21px;
+  line-height: 1;
+}
+
+.back-button:focus-visible,
+.calendar-home-button:focus-visible {
+  outline: 3px solid rgba(54, 169, 214, 0.42);
+  outline-offset: 3px;
+}
+
+.back-button:active {
+  transform: scale(0.98);
+}
+
 .icon-button,
 .calendar-header-tools button,
 .calendar-header-tools > span,
@@ -11918,6 +11956,16 @@ main {
 }
 
 @media (max-width: 420px) {
+  .back-button {
+    width: 44px;
+    padding-right: 0;
+    padding-left: 0;
+  }
+
+  .back-button-label {
+    display: none;
+  }
+
   .header-brand-copy small {
     font-size: 8px;
   }
