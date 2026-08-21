@@ -13419,3 +13419,106 @@ main {
 .calendar-keyword-filter button {
   min-width: 44px;
 }
+
+/* ============================================================
+   ホーム画面 UI 崩れ修正 (2026-08-21)
+   対象: 4機能カードのアイコン重なり／ボトムナビの余白不足／
+         記録するボタンの大きさ／CTA文言のコントラスト
+   既存の重複定義には手を加えず、ホーム画面（.screen-home）に
+   限定した最小差分の上書きのみを行う。
+   ============================================================ */
+
+/* 1) 太陽・月・検索マークを、ベースアイコンと重ならない
+      小さなコーナーバッジへ変更し、1つの視覚単位に見せる */
+.screen-home .feature-calendar-visual > .line-icon,
+.screen-home .feature-search-visual > .line-icon {
+  margin: 0 6px 6px 0;
+}
+
+.screen-home .feature-sun {
+  top: auto;
+  right: 0;
+  bottom: 0;
+  width: 16px;
+  height: 16px;
+  background: #ffb916;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.92);
+}
+
+.screen-home .feature-moon {
+  top: auto;
+  right: 0;
+  bottom: 0;
+  width: 16px;
+  height: 16px;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.92);
+}
+
+.screen-home .feature-moon::after {
+  top: 1px;
+  left: 5px;
+  width: 15px;
+  height: 15px;
+}
+
+.screen-home .feature-search-visual i {
+  right: 0;
+  bottom: 0;
+  width: 20px;
+  height: 20px;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.92);
+}
+
+.screen-home .feature-search-visual i .line-icon {
+  width: 13px;
+  height: 13px;
+}
+
+/* 4カードでアイコンのサイズ・位置・余白を統一
+   （「本日の工事」だけ他より一回り大きかったものを揃える） */
+.screen-home .home-feature-card:nth-child(1) .home-feature-visual {
+  width: 46px;
+  height: 46px;
+}
+
+.screen-home .home-feature-card:nth-child(1) .home-feature-visual > .line-icon {
+  width: 32px;
+  height: 32px;
+}
+
+/* 2) 固定ボトムナビ（高さ＋セーフエリア）にカード下部の文言が
+      隠れないよう、ホーム画面の下余白を強化する
+      注意: `.tabs.bottom-nav` は `.screen-home` の子孫ではなく
+      `<main>` 内の兄弟要素のため、`.screen-home main` では一致しない。
+      既存コード（9600行目付近）と同じ `body:has(.screen-home)` で
+      スコープする */
+body:has(.screen-home) main {
+  padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 40px);
+}
+
+/* 3) 中央「記録する」ボタンを、周囲のナビ項目と本文を
+      圧迫しない大きさへ縮小する（主CTAとしての強調は維持）
+      既存の `.tab-record .tab-icon` に !important 指定の
+      サイズ定義があるため、同じ優先度で上書きする */
+body:has(.screen-home) .tabs.bottom-nav .tab-record .tab-icon {
+  flex-basis: 52px !important;
+  width: 52px !important;
+  min-width: 52px !important;
+  height: 52px !important;
+  min-height: 52px !important;
+  margin-top: -14px !important;
+  border-width: 3px;
+}
+
+body:has(.screen-home) .tabs.bottom-nav .tab-record .tab-icon .line-icon {
+  width: 26px;
+  height: 26px;
+}
+
+/* 4) 「本日の予定を登録すると表示されます」のコントラストを
+      改善する（無効状態と分かるデザインは維持） */
+.home-summary-empty-action {
+  border: 1px solid rgba(15, 64, 48, 0.16);
+  color: #3f5a4e;
+  font-weight: 600;
+}
